@@ -13,6 +13,14 @@ Berikut ini prinsip utama dari NGAWICrypt:
 
 1. (Isi sendiri)
 
+## Kebutuhan
+Berikut ini kebutuhan dalam *development* NGAWICrypt:
+### *Development*
+- `pnpm`
+  - `vue`
+  - `tailwind`
+- `python`
+
 ## Cara menjalankan
 
 ## Tentang Kami

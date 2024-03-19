@@ -34,8 +34,9 @@ def register_controllers(app: Flask):
         # baca key
         key = bytes(request.form["key"])
         # encrypt
+        cipher = Cipher()
         start_time = time.time()
-        ciphertext = Cipher.encrypt(plaintext, key, mode)
+        ciphertext = cipher.encrypt(plaintext, key, mode)
         execution_time = time.time() - start_time
         # save temp file
         filename = ""
@@ -50,7 +51,7 @@ def register_controllers(app: Flask):
             f.write(ciphertext)
         # bikin json
         return jsonify(
-            {"ciphertext": base64.b64encode(ciphertext), "elapsed_time": execution_time}
+            {"ciphertext": base64.b64encode(ciphertext), "elapsed_time": execution_time,'download_filename':filename}
         )
 
     @app.route("/decrypt", methods=["POST"])
@@ -74,8 +75,9 @@ def register_controllers(app: Flask):
       # baca key
       key = bytes(request.form["key"])
       # decrypt
+      cipher = Cipher()
       start_time = time.time()
-      plaintext = Cipher.decrypt(ciphertext, key, mode)
+      plaintext = cipher.decrypt(ciphertext, key, mode)
       execution_time = time.time() - start_time
       # save temp file
       filename = ""
@@ -90,7 +92,7 @@ def register_controllers(app: Flask):
           f.write(plaintext)
       # bikin json
       return jsonify(
-          {"plaintext": base64.b64encode(plaintext), "elapsed_time": execution_time}
+          {"plaintext": base64.b64encode(plaintext), "elapsed_time": execution_time,'download_filename':filename}
       )
 
     @app.route("/download/<filename>", methods=["GET"])

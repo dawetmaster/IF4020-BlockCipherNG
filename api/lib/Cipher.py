@@ -3,3 +3,5 @@ class Cipher():
     pass
   def encrypt(self,plaintext:bytes,key:bytes,mode:str)->bytes:
     pass
+  def decrypt(self,ciphertext:bytes,key:bytes,mode:str)->bytes:
+    pass

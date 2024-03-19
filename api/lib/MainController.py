@@ -55,30 +55,44 @@ def register_controllers(app: Flask):
 
     @app.route("/decrypt", methods=["POST"])
     def decrypt():
-        pass
+      # baca ciphertext
+      ciphertext = ""
+      original_filename = ""
+      if "file" in request.files:
+          file = request.files["file"]
+          if not file:
+              flash("No file received")
+              return "File not found", 400
+           # baca file
+          ciphertext = file.stream.read()
+          original_filename = file.filename
+      else:
+          # plaintext murni
+          ciphertext = str.encode(request.form["ciphertext"])
+      # baca mode
+      mode = request.form["mode"]
+      # baca key
+      key = bytes(request.form["key"])
+      # decrypt
+      start_time = time.time()
+      plaintext = Cipher.decrypt(ciphertext, key, mode)
+      execution_time = time.time() - start_time
+      # save temp file
+      filename = ""
+      if original_filename != "":
+          names = original_filename.rsplit(".", 1)
+          filename = f"{secure_filename(names[0])}-{str(int(time.time()))}-decrypted.{names[1]}"
+      else:
+          filename = f"{str(uuid.uuid4())}-decrypted.txt"
+      # simpan dulu
+      plaintext_path = os.path.join(app.config["UPLOAD_PATH"], filename)
+      with open(plaintext_path, "wb") as f:
+          f.write(plaintext)
+      # bikin json
+      return jsonify(
+          {"plaintext": base64.b64encode(plaintext), "elapsed_time": execution_time}
+      )
 
     @app.route("/download", methods=["GET"])
     def download():
         pass
-
-    # if "files" not in request.files:
-    #     flash("No file received")
-    #     return redirect('/')
-    #   archive = request.files['files']
-    #   if(not archive):
-    #     flash("No file received")
-    #     return redirect('/')
-    #   # pastikan file nya boleh diunggah
-    #   if(not is_file_allowed(archive.filename)):
-    #     flash("File not supported")
-    #     return redirect('/')
-    #   # rename
-    #   names = archive.filename.rsplit('.',1)
-    #   filename = f"{secure_filename(names[0])}-{str(int(time.time()))}.{names[1]}"
-    #   # simpan dulu
-    #   archive_path = os.path.join(app.config['UPLOAD_PATH'],filename)
-    #   archive.save(archive_path)
-    #   # parse file
-    #   parser = FileParser(archive_path)
-    #   parser.load()
-    #   return "TBD"

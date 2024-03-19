@@ -1,4 +1,4 @@
-from flask import Flask, request, flash, jsonify
+from flask import Flask, request, flash, jsonify,send_file
 from werkzeug.utils import secure_filename
 from Cipher import Cipher
 import time
@@ -93,6 +93,8 @@ def register_controllers(app: Flask):
           {"plaintext": base64.b64encode(plaintext), "elapsed_time": execution_time}
       )
 
-    @app.route("/download", methods=["GET"])
-    def download():
-        pass
+    @app.route("/download/<filename>", methods=["GET"])
+    def download(filename):
+      # read file
+      return send_file(os.path.join(app.config["UPLOAD_PATH"], filename),as_attachment=True,download_name=filename)
+          

@@ -42,16 +42,64 @@ class Cipher():
       #append
       ciphertext = np.append(ciphertext,block)
     return bytes(ciphertext)
+  
   def decrypt(self,ciphertext:bytes,key:bytes,mode:str)->bytes:
-    pass
+    #init plaintext
+    plaintext = np.empty(0,dtype=np.byte)
+    # convert to numpy bytes
+    ciphertext = np.frombuffer(ciphertext,dtype=np.byte)
+    key = np.frombuffer(key,dtype=np.byte)
+    # init internal key
+    self.init_internal_key(key)
+    #deciphering
+    for i in range(0,len(plaintext),Cipher.BLOCK_SIZE):
+      #init block
+      start_index = i*Cipher.BLOCK_SIZE
+      # slice
+      block = plaintext[start_index:start_index + Cipher.BLOCK_SIZE]
+      #inverse final permutation
+      block = self.inverse_final_permutation(block)
+      # partisi
+      left_block =  block[:(Cipher.BLOCK_SIZE//2)]
+      right_block = block[(Cipher.BLOCK_SIZE//2):]
+      for j in range(Cipher.ROUNDS):
+        internal_key = self.generate_key(Cipher.ROUNDS-j-1)
+        processed_left = self.inv_f(left_block,internal_key)
+        processed_right = right_block ^ processed_left
+        # swap 
+        left_block = processed_right
+        right_block = left_block
+      block = np.concatenate([left_block,right_block])
+      #initial permutation
+      block = self.inverse_initial_permutation(block)
+      #append
+      plaintext = np.append(ciphertext,block)
+    #remove padding
+    # cek apakah ada padding
+    padding_count = plaintext[-1]
+    have_padding = True
+    for k in range(len(plaintext)-1,len(plaintext)-padding_count-1,-1):
+      if(plaintext[k]!=padding_count):
+        have_padding = False
+        break
+    if have_padding:
+      # remove padding
+      plaintext = plaintext[:-padding_count]
+    return bytes(plaintext)
 
-  def generate_key(self,iteration:int)->np.NDArray[np.byte]:
+  def generate_key(self,iteration:int)->np.ndarray[np.byte]:
     pass
-  def initial_permutation(self,plaintext:np.NDArray[np.byte])->np.NDArray[np.byte]:
+  def initial_permutation(self,plaintext:np.ndarray[np.byte])->np.ndarray[np.byte]:
     pass
-  def final_permutation(self,ciphertext:np.NDArray[np.byte])->bytes:
+  def inverse_initial_permutation(self,plaintext:np.ndarray[np.byte])->np.ndarray[np.byte]:
     pass
-  def init_internal_key(self,key:np.NDArray[np.byte])->None:
+  def final_permutation(self,ciphertext:np.ndarray[np.byte])->bytes:
     pass
-  def f(self,right_block:np.NDArray[np.byte],internal_key:np.NDArray[np.byte])->np.NDArray[np.byte]:
+  def inverse_final_permutation(self,ciphertext:np.ndarray[np.byte])->np.ndarray[np.byte]:
+    pass
+  def init_internal_key(self,key:np.ndarray[np.byte])->None:
+    pass
+  def f(self,right_block:np.ndarray[np.byte],internal_key:np.ndarray[np.byte])->np.ndarray[np.byte]:
+    pass
+  def inv_f(self,left_block:np.ndarray[np.byte],internal_key:np.ndarray[np.byte])->np.ndarray[np.byte]:
     pass

@@ -1,6 +1,6 @@
 import numpy as np
 class Cipher():
-  BLOCK_SIZE = 64
+  BLOCK_SIZE = 16 #bytes
   ROUNDS = 16
   def __init__(self) -> None:
     pass

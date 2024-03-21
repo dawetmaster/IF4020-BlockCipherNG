@@ -32,7 +32,7 @@ def register_controllers(app: Flask):
         # baca mode
         mode = request.form["mode"]
         # baca key
-        key = bytes(request.form["key"])
+        key = str.encode(request.form["key"])
         # encrypt
         cipher = Cipher()
         start_time = time.time()
@@ -73,7 +73,7 @@ def register_controllers(app: Flask):
       # baca mode
       mode = request.form["mode"]
       # baca key
-      key = bytes(request.form["key"])
+      key = str.encode(request.form["key"])
       # decrypt
       cipher = Cipher()
       start_time = time.time()

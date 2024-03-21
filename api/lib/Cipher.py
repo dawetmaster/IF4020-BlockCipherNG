@@ -1,6 +1,7 @@
 import numpy as np
 class Cipher():
   BLOCK_SIZE = 16 #bytes
+  KEY_SIZE=16 #bytes
   ROUNDS = 16
   def __init__(self) -> None:
     pass
@@ -16,6 +17,9 @@ class Cipher():
     # convert to numpy bytes
     plaintext = np.frombuffer(plaintext,dtype=np.byte)
     key = np.frombuffer(key,dtype=np.byte)
+    # slice key
+    if(len(key)>Cipher.KEY_SIZE):
+      key = key[:Cipher.KEY_SIZE]
     # init internal key
     self.init_internal_key(key)
     #enciphering
@@ -49,6 +53,9 @@ class Cipher():
     # convert to numpy bytes
     ciphertext = np.frombuffer(ciphertext,dtype=np.byte)
     key = np.frombuffer(key,dtype=np.byte)
+    # slice key
+    if(len(key)>Cipher.KEY_SIZE):
+      key = key[:Cipher.KEY_SIZE]
     # init internal key
     self.init_internal_key(key)
     #deciphering

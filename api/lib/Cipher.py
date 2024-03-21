@@ -6,6 +6,10 @@ class Cipher():
   def __init__(self) -> None:
     pass
   def encrypt(self,plaintext:bytes,key:bytes,mode:str)->bytes:
+    #set up IV
+    iv = None
+    if(mode=="cbc"):
+      iv = ""
     #init ciphertext
     ciphertext = np.empty(0,dtype=np.byte)
     #padding
@@ -17,9 +21,6 @@ class Cipher():
     # convert to numpy bytes
     plaintext = np.frombuffer(plaintext,dtype=np.byte)
     key = np.frombuffer(key,dtype=np.byte)
-    # slice key
-    if(len(key)>Cipher.KEY_SIZE):
-      key = key[:Cipher.KEY_SIZE]
     # init internal key
     self.init_internal_key(key)
     #enciphering
@@ -53,9 +54,6 @@ class Cipher():
     # convert to numpy bytes
     ciphertext = np.frombuffer(ciphertext,dtype=np.byte)
     key = np.frombuffer(key,dtype=np.byte)
-    # slice key
-    if(len(key)>Cipher.KEY_SIZE):
-      key = key[:Cipher.KEY_SIZE]
     # init internal key
     self.init_internal_key(key)
     #deciphering

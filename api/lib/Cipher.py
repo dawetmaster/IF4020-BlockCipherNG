@@ -9,7 +9,8 @@ class Cipher():
     #set up IV
     iv = None
     if(mode=="cbc"):
-      iv = ""
+      iv_seed = hex(int.from_bytes(key[:8],"big") + int.from_bytes(key[8:],"big"))[2:].encode()
+      iv = np.frombuffer(iv_seed,dtype=np.byte) 
     #init ciphertext
     ciphertext = np.empty(0,dtype=np.byte)
     #padding
@@ -49,6 +50,11 @@ class Cipher():
     return bytes(ciphertext)
   
   def decrypt(self,ciphertext:bytes,key:bytes,mode:str)->bytes:
+    #set up IV
+    iv = None
+    if(mode=="cbc"):
+      iv_seed = hex(int.from_bytes(key[:8],"big") + int.from_bytes(key[8:],"big"))[2:].encode()
+      iv = np.frombuffer(iv_seed,dtype=np.byte) 
     #init plaintext
     plaintext = np.empty(0,dtype=np.byte)
     # convert to numpy bytes

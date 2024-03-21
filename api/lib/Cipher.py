@@ -7,10 +7,10 @@ class Cipher():
     pass
   def encrypt(self,plaintext:bytes,key:bytes,mode:str)->bytes:
     #set up IV
-    iv = None
+    prev_cipher = None
     if(mode=="cbc"):
-      iv_seed = hex(int.from_bytes(key[:Cipher.KEY_SIZE//2],"big") + int.from_bytes(key[Cipher.KEY_SIZE//2:],"big"))[2:].encode()
-      iv = np.frombuffer(iv_seed,dtype=np.byte) 
+      iv = hex(int.from_bytes(key[:Cipher.KEY_SIZE//2],"big") + int.from_bytes(key[Cipher.KEY_SIZE//2:],"big"))[2:].encode()
+      prev_cipher = np.frombuffer(iv,dtype=np.byte) 
     #init ciphertext
     ciphertext = np.empty(0,dtype=np.byte)
     #padding
@@ -30,6 +30,9 @@ class Cipher():
       start_index = i*Cipher.BLOCK_SIZE
       # slice
       block = plaintext[start_index:start_index + Cipher.BLOCK_SIZE]
+      # XOR kan dengan ciphertext sebelumnya bila mode CBC
+      if(mode=='cbc'):
+        block = block ^ prev_cipher
       #initial permutation
       block = self.initial_permutation(block)
       # partisi
@@ -45,16 +48,18 @@ class Cipher():
       #final permutation
       block = np.concatenate([left_block,right_block])
       block = self.final_permutation(block)
+      # ganti prev_cipher
+      prev_cipher = block
       #append
       ciphertext = np.append(ciphertext,block)
     return bytes(ciphertext)
   
   def decrypt(self,ciphertext:bytes,key:bytes,mode:str)->bytes:
     #set up IV
-    iv = None
+    prev_cipher = None
     if(mode=="cbc"):
-      iv_seed = hex(int.from_bytes(key[:Cipher.KEY_SIZE//2],"big") + int.from_bytes(key[Cipher.KEY_SIZE//2:],"big"))[2:].encode()
-      iv = np.frombuffer(iv_seed,dtype=np.byte) 
+      iv = hex(int.from_bytes(key[:Cipher.KEY_SIZE//2],"big") + int.from_bytes(key[Cipher.KEY_SIZE//2:],"big"))[2:].encode()
+      prev_cipher = np.frombuffer(iv,dtype=np.byte) 
     #init plaintext
     plaintext = np.empty(0,dtype=np.byte)
     # convert to numpy bytes
@@ -63,11 +68,11 @@ class Cipher():
     # init internal key
     self.init_internal_key(key)
     #deciphering
-    for i in range(0,len(plaintext),Cipher.BLOCK_SIZE):
+    for i in range(0,len(ciphertext),Cipher.BLOCK_SIZE):
       #init block
       start_index = i*Cipher.BLOCK_SIZE
       # slice
-      block = plaintext[start_index:start_index + Cipher.BLOCK_SIZE]
+      block = ciphertext[start_index:start_index + Cipher.BLOCK_SIZE]
       #inverse final permutation
       block = self.inverse_final_permutation(block)
       # partisi
@@ -83,6 +88,11 @@ class Cipher():
       block = np.concatenate([left_block,right_block])
       #initial permutation
       block = self.inverse_initial_permutation(block)
+      # XOR kan dengan ciphertext sebelumnya bila mode CBC
+      if(mode=='cbc'):
+        block = block ^ prev_cipher
+      # ganti prev_cipher
+      prev_cipher = ciphertext[start_index:start_index + Cipher.BLOCK_SIZE]
       #append
       plaintext = np.append(ciphertext,block)
     #remove padding

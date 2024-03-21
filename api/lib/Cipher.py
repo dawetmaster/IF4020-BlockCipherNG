@@ -3,7 +3,7 @@ class Cipher():
   BLOCK_SIZE = 16 #bytes
   KEY_SIZE=16 #bytes
   ROUNDS = 16
-  
+
   def __init__(self, key:bytes) -> None:
     self.key = key
     self.subkeys = self.generate_key()
@@ -135,9 +135,12 @@ class Cipher():
       # for each odd iteration, transpose the subkey
       if i % 2 == 1:
         subkey = np.transpose(subkey)
-      subkeys.append(subkey)
       base_mtr = subkey
-    return np.array(subkeys,dtype=np.byte)
+
+      # return subkeys to its original form which is bytes
+      subkey = bytes(subkey.reshape(16))
+      subkeys.append(subkey)
+    return subkeys
 
 
   def initial_permutation(self,plaintext:np.ndarray[np.byte])->np.ndarray[np.byte]:

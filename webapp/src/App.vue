@@ -1,20 +1,13 @@
 <script setup lang="ts">
-// import HelloWorld from './components/HelloWorld.vue'
+  // import { RouterLink, RouterView } from 'vue-router'
+  import Header from './components/Header.vue'
 </script>
 
 <template>
-  <div class="p-4 m-auto border-2 rounded-lg bg-slate-800 text-white">
-    <h1 class="text-3xl font-bold">Hello world!</h1>
-    <p class="mt-5">
-      Lorem ipsum dolor sit amet consectetur adipisicing elit. Numquam qui
-      minima autem nobis animi perspiciatis deleniti quaerat, recusandae
-      officiis ea totam quisquam repellat quidem perferendis ad! Vel officia
-      voluptatibus ipsam.
-    </p>
-    <button
-      class="bg-indigo-600 hover:bg-indigo-800 mt-4 font-bold py-2 px-4 rounded"
-    >
-      Click Me
-    </button>
-  </div>
+  <main class="flex flex-col min-h-screen">
+    <Header class="grow-0" />
+    <div class="grow bg-stone-100 dark:bg-stone-800">
+      OK
+    </div>
+  </main>
 </template>

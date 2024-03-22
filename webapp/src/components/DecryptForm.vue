@@ -1,11 +1,11 @@
 <template>
   <form class="justify-center flex flex-col gap-4">
-    <div class="flex gap-2 sm:gap-4 flex-col sm:flex-row">
+    <div class="flex gap-4">
       <div class="grid gap-2 grow">
-        <textarea id="plaintext" class="form-textarea simple resize-none dark:bg-stone-700 dark:text-white dark:border-stone-400 dark:placeholder:text-stone-400" placeholder="Write your plaintext here..."></textarea>
+        <textarea id="ciphertext" class="form-textarea simple resize-none dark:bg-stone-700 dark:text-white dark:border-stone-400 dark:placeholder:text-stone-400" placeholder="Write your plaintext here..."></textarea>
         <div class="flex gap-2 items-center">
           <input type="checkbox" id="base64" name="base64">
-          <label for="base64" class="dark:text-white">The plaintext is in Base64</label>
+          <label for="base64" class="dark:text-white">The ciphertext is in Base64</label>
         </div>
       </div>
       <div class="grid gap-2">

@@ -133,7 +133,7 @@ class Cipher():
       for j in range(4):
         sum = 0
         for k in range(4):
-          sum += base_mtr[j][k]
+          sum += base_mtr[k][j]
         shift = sum * (i+1)
         # handle case if shift % 4 == 0
         l = 1
@@ -142,8 +142,9 @@ class Cipher():
           l += 1
 
         shift = shift % 4
-        for k in range(4):
-          subkey[j][k] = base_mtr[j][(k+shift)%4]
+        # shift the row based on the number of shift
+        subkey[j] = np.roll(base_mtr[j], shift)
+
       # for each odd iteration, transpose the subkey
       if i % 2 == 1:
         subkey = np.transpose(subkey)

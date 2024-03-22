@@ -7,7 +7,7 @@
 
 <template>
   <main class="flex flex-col min-h-screen">
-    <Header class="grow-0" />
+    <Header />
     <div class="grow bg-stone-100 dark:bg-stone-800 p-8">
       <div class="max-w-screen-lg mx-auto">
         <RouterView />

@@ -7,6 +7,7 @@ import uuid
 import base64
 import time
 
+KEY_SIZE=16 #bytes
 
 def register_controllers(app: Flask):
     @app.route("/")
@@ -32,9 +33,12 @@ def register_controllers(app: Flask):
         # baca mode
         mode = request.form["mode"]
         # baca key
-        key = bytes(request.form["key"])
+        key = str.encode(request.form["key"])
+        if(len(key)!=KEY_SIZE):
+            # return 400
+            return "Key must be 128-bit (16 bytes)",400
         # encrypt
-        cipher = Cipher()
+        cipher = Cipher(key)
         start_time = time.time()
         ciphertext = cipher.encrypt(plaintext, key, mode)
         execution_time = time.time() - start_time
@@ -73,7 +77,10 @@ def register_controllers(app: Flask):
       # baca mode
       mode = request.form["mode"]
       # baca key
-      key = bytes(request.form["key"])
+      key = str.encode(request.form["key"])
+      if(len(key)!=KEY_SIZE):
+        # return 400
+        return "Key must be 128-bit (16 bytes)",400
       # decrypt
       cipher = Cipher()
       start_time = time.time()

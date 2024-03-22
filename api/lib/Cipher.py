@@ -1,10 +1,19 @@
 import numpy as np
 class Cipher():
-  BLOCK_SIZE = 64
+  BLOCK_SIZE = 16 #bytes
+  KEY_SIZE=16 #bytes
   ROUNDS = 16
-  def __init__(self) -> None:
-    pass
+
+  def __init__(self, key:bytes) -> None:
+    self.key = key
+    self.subkeys = self.generate_key()
+
   def encrypt(self,plaintext:bytes,key:bytes,mode:str)->bytes:
+    #set up IV
+    prev_cipher = None
+    if(mode=="cbc"):
+      iv = hex(int.from_bytes(key[:Cipher.KEY_SIZE//2],"big") + int.from_bytes(key[Cipher.KEY_SIZE//2:],"big"))[2:].encode()
+      prev_cipher = np.frombuffer(iv,dtype=np.byte) 
     #init ciphertext
     ciphertext = np.empty(0,dtype=np.byte)
     #padding
@@ -24,14 +33,16 @@ class Cipher():
       start_index = i*Cipher.BLOCK_SIZE
       # slice
       block = plaintext[start_index:start_index + Cipher.BLOCK_SIZE]
+      # XOR kan dengan ciphertext sebelumnya bila mode CBC
+      if(mode=='cbc'):
+        block = block ^ prev_cipher
       #initial permutation
       block = self.initial_permutation(block)
       # partisi
       left_block =  block[:(Cipher.BLOCK_SIZE//2)]
       right_block = block[(Cipher.BLOCK_SIZE//2):]
       for j in range(Cipher.ROUNDS):
-        internal_key = self.generate_key(j)
-        processed_right = self.f(right_block,internal_key)
+        processed_right = self.f(right_block,self.subkeys[j])
         processed_left = left_block ^ processed_right
         # swap 
         left_block = right_block
@@ -39,11 +50,18 @@ class Cipher():
       #final permutation
       block = np.concatenate([left_block,right_block])
       block = self.final_permutation(block)
+      # ganti prev_cipher
+      prev_cipher = block
       #append
       ciphertext = np.append(ciphertext,block)
     return bytes(ciphertext)
   
   def decrypt(self,ciphertext:bytes,key:bytes,mode:str)->bytes:
+    #set up IV
+    prev_cipher = None
+    if(mode=="cbc"):
+      iv = hex(int.from_bytes(key[:Cipher.KEY_SIZE//2],"big") + int.from_bytes(key[Cipher.KEY_SIZE//2:],"big"))[2:].encode()
+      prev_cipher = np.frombuffer(iv,dtype=np.byte) 
     #init plaintext
     plaintext = np.empty(0,dtype=np.byte)
     # convert to numpy bytes
@@ -52,19 +70,18 @@ class Cipher():
     # init internal key
     self.init_internal_key(key)
     #deciphering
-    for i in range(0,len(plaintext),Cipher.BLOCK_SIZE):
+    for i in range(0,len(ciphertext),Cipher.BLOCK_SIZE):
       #init block
       start_index = i*Cipher.BLOCK_SIZE
       # slice
-      block = plaintext[start_index:start_index + Cipher.BLOCK_SIZE]
+      block = ciphertext[start_index:start_index + Cipher.BLOCK_SIZE]
       #inverse final permutation
       block = self.inverse_final_permutation(block)
       # partisi
       left_block =  block[:(Cipher.BLOCK_SIZE//2)]
       right_block = block[(Cipher.BLOCK_SIZE//2):]
       for j in range(Cipher.ROUNDS):
-        internal_key = self.generate_key(Cipher.ROUNDS-j-1)
-        processed_left = self.inv_f(left_block,internal_key)
+        processed_left = self.inv_f(left_block,self.subkeys[j])
         processed_right = right_block ^ processed_left
         # swap 
         left_block = processed_right
@@ -72,6 +89,11 @@ class Cipher():
       block = np.concatenate([left_block,right_block])
       #initial permutation
       block = self.inverse_initial_permutation(block)
+      # XOR kan dengan ciphertext sebelumnya bila mode CBC
+      if(mode=='cbc'):
+        block = block ^ prev_cipher
+      # ganti prev_cipher
+      prev_cipher = ciphertext[start_index:start_index + Cipher.BLOCK_SIZE]
       #append
       plaintext = np.append(ciphertext,block)
     #remove padding
@@ -87,8 +109,40 @@ class Cipher():
       plaintext = plaintext[:-padding_count]
     return bytes(plaintext)
 
-  def generate_key(self,iteration:int)->np.ndarray[np.byte]:
-    pass
+  def generate_key(self)->np.ndarray[np.byte]:
+    subkeys = []
+    # key is represented in 4x4 matrix
+    key_mtr = np.frombuffer(self.key, dtype=np.uint8).reshape(4,4)
+    base_mtr = key_mtr
+    for i in range(1, Cipher.ROUNDS + 1):
+      # for j in range of 4, sum all elements in column j
+      # then shift all elements in row j by sum * (i+1)
+      subkey = np.zeros((4,4),dtype=np.uint8)
+      for j in range(4):
+        sum = 0
+        for k in range(4):
+          sum += base_mtr[j][k]
+        shift = sum * (i+1)
+        # handle case if shift % 4 == 0
+        l = 1
+        while shift % 4 == 0:
+          shift += i+l
+          l += 1
+
+        shift = shift % 4
+        for k in range(4):
+          subkey[j][k] = base_mtr[j][(k+shift)%4]
+      # for each odd iteration, transpose the subkey
+      if i % 2 == 1:
+        subkey = np.transpose(subkey)
+      base_mtr = subkey
+
+      # return subkeys to its original form which is bytes
+      subkey = bytes(subkey.reshape(16))
+      subkeys.append(subkey)
+    return subkeys
+
+
   def initial_permutation(self,plaintext:np.ndarray[np.byte])->np.ndarray[np.byte]:
     pass
   def inverse_initial_permutation(self,plaintext:np.ndarray[np.byte])->np.ndarray[np.byte]:

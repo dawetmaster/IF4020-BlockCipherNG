@@ -22,6 +22,6 @@ defineProps<{
       </div>
     </div>
     <input type="text" id="key" name="key" :placeholder="keyplaceholder" class="rounded-md shadow-sm focus:border-rose-300 dark:focus:border-rose-500 focus:ring focus:ring-rose-200 dark:focus:ring-rose-400 dark:bg-stone-700 dark:text-white dark:border-stone-400 dark:placeholder:text-stone-400">
-    <input type="submit" class="text-white bg-rose-600 dark:bg-rose-900 rounded drop-shadow-sm hover:drop-shadow-md p-2">
+    <input type="submit" class="text-white bg-rose-600 dark:bg-rose-800 rounded drop-shadow-sm hover:drop-shadow-md p-2">
   </form>
 </template>

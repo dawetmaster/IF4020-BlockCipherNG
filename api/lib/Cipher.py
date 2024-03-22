@@ -37,9 +37,6 @@ class Cipher():
     plaintext = np.frombuffer(plaintext,dtype=np.byte)
     key = np.frombuffer(key,dtype=np.byte)
 
-    # init internal key
-    self.init_internal_key(key)
-
     #enciphering
     for i in range(0,len(plaintext),Cipher.BLOCK_SIZE):
       #init block
@@ -82,8 +79,6 @@ class Cipher():
     # convert to numpy bytes
     ciphertext = np.frombuffer(ciphertext,dtype=np.byte)
     key = np.frombuffer(key,dtype=np.byte)
-    # init internal key
-    self.init_internal_key(key)
     #deciphering
     for i in range(0,len(ciphertext),Cipher.BLOCK_SIZE):
       #init block
@@ -166,8 +161,6 @@ class Cipher():
   def final_permutation(self,ciphertext:np.ndarray)->bytes:
     pass
   def inverse_final_permutation(self,ciphertext:np.ndarray)->np.ndarray:
-    pass
-  def init_internal_key(self,key:np.ndarray)->None:
     pass
   def f(self,right_block:np.ndarray,internal_key:np.ndarray)->np.ndarray:
     pass

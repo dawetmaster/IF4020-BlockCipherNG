@@ -121,7 +121,7 @@ class Cipher():
       plaintext = plaintext[:-padding_count]
     return bytes(plaintext)
 
-  def generate_key(self)->np.ndarray[np.byte]:
+  def generate_key(self)->list[bytes]:
     subkeys = []
     # key is represented in 4x4 matrix
     key_mtr = np.frombuffer(self.key, dtype=np.uint8).reshape(4,4)
@@ -156,17 +156,17 @@ class Cipher():
     return subkeys
 
 
-  def initial_permutation(self,plaintext:np.ndarray[np.byte])->np.ndarray[np.byte]:
+  def initial_permutation(self,plaintext:np.ndarray)->np.ndarray:
     pass
-  def inverse_initial_permutation(self,plaintext:np.ndarray[np.byte])->np.ndarray[np.byte]:
+  def inverse_initial_permutation(self,plaintext:np.ndarray)->np.ndarray:
     pass
-  def final_permutation(self,ciphertext:np.ndarray[np.byte])->bytes:
+  def final_permutation(self,ciphertext:np.ndarray)->bytes:
     pass
-  def inverse_final_permutation(self,ciphertext:np.ndarray[np.byte])->np.ndarray[np.byte]:
+  def inverse_final_permutation(self,ciphertext:np.ndarray)->np.ndarray:
     pass
-  def init_internal_key(self,key:np.ndarray[np.byte])->None:
+  def init_internal_key(self,key:np.ndarray)->None:
     pass
-  def f(self,right_block:np.ndarray[np.byte],internal_key:np.ndarray[np.byte])->np.ndarray[np.byte]:
+  def f(self,right_block:np.ndarray,internal_key:np.ndarray)->np.ndarray:
     pass
-  def inv_f(self,left_block:np.ndarray[np.byte],internal_key:np.ndarray[np.byte])->np.ndarray[np.byte]:
+  def inv_f(self,left_block:np.ndarray,internal_key:np.ndarray)->np.ndarray:
     pass

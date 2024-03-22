@@ -1,5 +1,7 @@
+import random
 import numpy as np
 class Cipher():
+
   BLOCK_SIZE = 16 #bytes
   KEY_SIZE=16 #bytes
   ROUNDS = 16
@@ -9,24 +11,34 @@ class Cipher():
     self.subkeys = self.generate_key()
 
   def encrypt(self,plaintext:bytes,key:bytes,mode:str)->bytes:
-    #set up IV
+
     prev_cipher = None
-    if(mode=="cbc"):
+    if(mode in ["cbc","cfb","ofb"]):
+      #set up IV
       iv = hex(int.from_bytes(key[:Cipher.KEY_SIZE//2],"big") + int.from_bytes(key[Cipher.KEY_SIZE//2:],"big"))[2:].encode()
-      prev_cipher = np.frombuffer(iv,dtype=np.byte) 
+      prev_cipher = np.frombuffer(iv, dtype=np.byte) 
+    elif (mode == "counter"):
+      # initial counter
+      random.seed(int.from_bytes(key, "big"))
+      counter = random.getrandbits(len(plaintext) * 8)
+
     #init ciphertext
     ciphertext = np.empty(0,dtype=np.byte)
+
     #padding
     remainder = len(plaintext) % Cipher.BLOCK_SIZE
     if remainder != 0:
       # tambahkan padding agar kelipatan BLOCK_SIZE
       pad_size = Cipher.BLOCK_SIZE-remainder
       plaintext += bytes(pad_size * [pad_size])
+
     # convert to numpy bytes
     plaintext = np.frombuffer(plaintext,dtype=np.byte)
     key = np.frombuffer(key,dtype=np.byte)
+
     # init internal key
     self.init_internal_key(key)
+
     #enciphering
     for i in range(0,len(plaintext),Cipher.BLOCK_SIZE):
       #init block

@@ -15,8 +15,9 @@ class Cipher():
     prev_cipher = None
     if(mode in ["cbc","cfb","ofb"]):
       #set up IV
+      random.seed(int.from_bytes(key, "big"))
       iv = hex(int.from_bytes(key[:Cipher.KEY_SIZE//2],"big") + int.from_bytes(key[Cipher.KEY_SIZE//2:],"big"))[2:].encode()
-      prev_cipher = np.frombuffer(iv, dtype=np.byte) 
+      prev_cipher = np.frombuffer(iv ^ random.getrandbits(len(plaintext),8), dtype=np.byte) 
     elif (mode == "counter"):
       # initial counter
       random.seed(int.from_bytes(key, "big"))
@@ -71,9 +72,11 @@ class Cipher():
   def decrypt(self,ciphertext:bytes,key:bytes,mode:str)->bytes:
     #set up IV
     prev_cipher = None
-    if(mode=="cbc"):
+    if(mode in ["cbc","cfb","ofb"]):
+      #set up IV
+      random.seed(int.from_bytes(key, "big"))
       iv = hex(int.from_bytes(key[:Cipher.KEY_SIZE//2],"big") + int.from_bytes(key[Cipher.KEY_SIZE//2:],"big"))[2:].encode()
-      prev_cipher = np.frombuffer(iv,dtype=np.byte) 
+      prev_cipher = np.frombuffer(iv ^ random.getrandbits(len(plaintext),8), dtype=np.byte) 
     #init plaintext
     plaintext = np.empty(0,dtype=np.byte)
     # convert to numpy bytes

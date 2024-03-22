@@ -41,7 +41,7 @@ export default {
   },
   methods: {
     submitForm() {
-      this.$emit('form-submitted', { inputtext: this.inputtext, key: this.key, file: this.file });
+      this.$emit('form-submitted', { inputtext: this.inputtext, key: this.key, file: this.file, base64check: this.base64check });
     },
     handleFileChange(event: any) {
       this.file = event.target.files[0];

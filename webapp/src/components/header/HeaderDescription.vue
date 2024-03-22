@@ -5,5 +5,5 @@ defineProps<{
 </script>
 
 <template>
-  <div class="text-center text-white">{{ text }}</div>
+  <div class="text-center text-white max-w-screen-lg mx-auto">{{ text }}</div>
 </template>

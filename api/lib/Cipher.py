@@ -277,72 +277,68 @@ class Cipher:
 
     def substitute(self, A: np.ndarray) -> np.ndarray:
         # dari expanded key sebanyak 16 bytes (128 bit) menjadi 8 bytes (64 bit)
-        # menerima input 8 bit dan menghasilkan 4 bit
-        # idenya ada 8 tabel substitusi. 4 bit input untuk menentukan baris dam 4 bit terakhir untuk menentukan kolom.
-        # byte 1-8 langsung indexing, kalau byte 9-12 tabel ganjil berurutan 1,3,5,7, byte 13-16 tabel genap berurutan 2,4,6,8
-        # penentuan baris dengan menjumlahkan semua bit
-        # tabel substitusi berukuran 16x16
-        # digenerate dengan menggunakan random.getrandbits(4) dengan seed 420 + n untuk setiap Sn (n dimulai dari 1 untuk S1) yang dimodifikasi agar bisa digunakan baik untuk enkripsi maupun dekripsi (bisa dua arah)
+        # menerima input 8 bit (2 bytes) dan menghasilkan 4 bit(1 byte)
+        # 2 bit buat geser S-box, 6 bit sisanya buat tentuin row dan kolom (sama kek DES)
         S1 = [
-            [10, 9, 9, 4, 13, 14, 7, 10],
-            [7, 4, 5, 8, 13, 13, 7, 6],
-            [9, 3, 6, 8, 1, 4, 15, 11],
-            [0, 5, 12, 7, 10, 2, 12, 7],
+            [14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7],
+            [0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8],
+            [4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0],
+            [15, 12, 8, 2, 4, 9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13],
         ]
         S2 = [
-            [6, 4, 0, 5, 15, 8, 9, 1],
-            [9, 3, 4, 13, 0, 7, 14, 4],
-            [12, 14, 2, 0, 7, 5, 8, 12],
-            [9, 6, 10, 15, 12, 3, 12, 2],
+            [15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10],
+            [3, 13, 4, 7, 15, 2, 8, 14, 12, 0, 1, 10, 6, 9, 11, 5],
+            [0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15],
+            [13, 8, 10, 1, 3, 15, 4, 2, 11, 6, 7, 12, 0, 5, 14, 9],
         ]
         S3 = [
-            [5, 2, 8, 10, 12, 12, 14, 11],
-            [11, 9, 14, 8, 6, 3, 5, 8],
-            [3, 14, 9, 7, 11, 12, 11, 12],
-            [14, 4, 13, 9, 14, 11, 1, 9],
+            [10, 0, 9, 14, 6, 3, 15, 5, 1, 13, 12, 7, 11, 4, 2, 8],
+            [13, 7, 0, 9, 3, 4, 6, 10, 2, 8, 5, 14, 12, 11, 15, 1],
+            [13, 6, 4, 9, 8, 15, 3, 0, 11, 1, 2, 12, 5, 10, 14, 7],
+            [1, 10, 13, 0, 6, 9, 8, 7, 4, 15, 14, 3, 11, 5, 2, 12],
         ]
         S4 = [
-            [8, 7, 12, 10, 11, 2, 0, 14],
-            [11, 10, 6, 1, 3, 14, 2, 0],
-            [13, 2, 11, 6, 10, 8, 3, 3],
-            [3, 1, 6, 3, 10, 6, 4, 1],
+            [7, 13, 14, 3, 0, 6, 9, 10, 1, 2, 8, 5, 11, 12, 4, 15],
+            [13, 8, 11, 5, 6, 15, 0, 3, 4, 7, 2, 12, 1, 10, 14, 9],
+            [10, 6, 9, 0, 12, 11, 7, 13, 15, 1, 3, 14, 5, 2, 8, 4],
+            [3, 15, 0, 6, 10, 1, 13, 8, 9, 4, 5, 11, 12, 7, 2, 14],
         ]
         S5 = [
-            [6, 1, 2, 5, 0, 9, 11, 8],
-            [11, 12, 8, 3, 9, 13, 11, 12],
-            [3, 9, 10, 5, 6, 13, 8, 8],
-            [0, 14, 3, 5, 8, 12, 11, 7],
+            [2, 12, 4, 1, 7, 10, 11, 6, 8, 5, 3, 15, 13, 0, 14, 9],
+            [14, 11, 2, 12, 4, 7, 13, 1, 5, 0, 15, 10, 3, 9, 8, 6],
+            [4, 2, 1, 11, 10, 13, 7, 8, 15, 9, 12, 5, 6, 3, 0, 14],
+            [11, 8, 12, 7, 1, 14, 2, 13, 6, 15, 0, 9, 10, 4, 5, 3],
         ]
         S6 = [
-            [2, 5, 11, 11, 5, 1, 3, 14],
-            [15, 1, 4, 7, 10, 8, 8, 15],
-            [12, 5, 14, 0, 9, 10, 12, 6],
-            [11, 4, 13, 15, 4, 5, 7, 5],
+            [12, 1, 10, 15, 9, 2, 6, 8, 0, 13, 3, 4, 14, 7, 5, 11],
+            [10, 15, 4, 2, 7, 12, 9, 5, 6, 1, 13, 14, 0, 11, 3, 8],
+            [9, 14, 15, 5, 2, 8, 12, 3, 7, 0, 4, 10, 1, 13, 11, 6],
+            [4, 3, 2, 12, 9, 5, 15, 10, 11, 14, 1, 7, 6, 0, 8, 13],
         ]
         S7 = [
-            [2, 9, 13, 7, 12, 5, 0, 2],
-            [4, 1, 10, 11, 14, 0, 8, 11],
-            [11, 7, 15, 5, 7, 11, 5, 6],
-            [8, 10, 5, 9, 11, 0, 5, 14],
+            [4, 11, 2, 14, 15, 0, 8, 13, 3, 12, 9, 7, 5, 10, 6, 1],
+            [13, 0, 11, 7, 4, 9, 1, 10, 14, 3, 5, 12, 2, 15, 8, 6],
+            [1, 4, 11, 13, 12, 3, 7, 14, 10, 15, 6, 8, 0, 5, 9, 2],
+            [6, 11, 13, 8, 1, 4, 10, 7, 9, 5, 0, 15, 14, 2, 3, 12],
         ]
         S8 = [
-            [4, 13, 0, 8, 7, 1, 14, 9],
-            [4, 14, 4, 8, 1, 4, 7, 12],
-            [1, 9, 14, 6, 9, 2, 15, 0],
-            [2, 4, 9, 12, 10, 6, 4, 10],
+            [13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7],
+            [1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2],
+            [7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8],
+            [2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11],
         ]
-        S = [S1,S2,S3,S4,S5,S6,S7,S8]
-        #initial block 
-        block = np.zeros(8,dtype=np.byte)
+        S = [S1, S2, S3, S4, S5, S6, S7, S8]
+        # initial block
+        block = np.zeros(8, dtype=np.byte)
         # isi block
         for i in range(Cipher.KEY_SIZE):
-            substitute = S[(A[i] & 0xE0)>>5][(A[i] & 0x18)>>3][A[i] & 0x7]
-            idx = i//2
-            if(i%2==0):
+            substitute = S[(i + (A[i] & 0xC0))%8][A[i] & 0x21][A[i] & 0x1E]
+            idx = i // 2
+            if i % 2 == 0:
                 # indeks genap
                 block[idx] = substitute
             else:
-                block[idx] = (block[idx]<<4) | substitute
+                block[idx] = (block[idx] << 4) | substitute
         return block
 
     def inverse_substitute(self, B: np.ndarray) -> np.ndarray:
@@ -354,6 +350,7 @@ class Cipher:
     def inverse_permutate(self, left_block: np.ndarray) -> np.ndarray:
         pass
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     c = Cipher(str.encode("abcdefghijklmnop"))
     print(c.substitute(str.encode("qrstuvwxyz012345")).tobytes())

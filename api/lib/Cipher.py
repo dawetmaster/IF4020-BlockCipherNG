@@ -153,7 +153,6 @@ class Cipher():
       subkeys.append(subkey)
     return subkeys
 
-
   def initial_permutation(self,plaintext:np.ndarray)->np.ndarray:
     pass
   def inverse_initial_permutation(self,plaintext:np.ndarray)->np.ndarray:
@@ -167,13 +166,16 @@ class Cipher():
     A = expanded_block ^ internal_key
     B = self.substitute(A)
     return self.permutate(B)
+  
   def inv_f(self,left_block:np.ndarray,internal_key:np.ndarray)->np.ndarray:
     B = self.inverse_permutate(left_block)
     A = self.inverse_substitute(B)
     original_block = A ^ internal_key
     return self.block_reduction(original_block)
+  
   def block_expansion(self,right_block:np.ndarray)->np.ndarray:
-    pass
+    #expand right_block dari 8 bytes menjadi 16 bytes (sama kek panjang kunci)
+    index = [1,3,5,7,8,7,6,5,4,3,2,1,2,4,6,8]# byte pertama -> indeks 0
   def block_reduction(self,original_block:np.ndarray)->np.ndarray:
     pass
   def substitute(self,A:np.ndarray)->np.ndarray:

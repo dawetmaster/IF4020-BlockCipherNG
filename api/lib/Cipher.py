@@ -278,9 +278,11 @@ class Cipher:
     def substitute(self, A: np.ndarray) -> np.ndarray:
         # dari expanded key sebanyak 16 bytes (128 bit) menjadi 8 bytes (64 bit)
         # menerima input 8 bit dan menghasilkan 4 bit
-        # idenya ada 1 tabel master dan 8 tabel substitusi. 3 bit pertama untuk menentukan tabel subsitusi yang digunakan. 2 bit berikutnya untuk menentukan baris dam 3 bit terakhir untuk menentukan kolom.
-        # tabel substitusi berukuran 4x8
-        # digenerate dengan menggunakan random.getrandbits(4) dengan seed 420 + n untuk setiap Sn (n dimulai dari 1 untuk S1)
+        # idenya ada 8 tabel substitusi. 4 bit input untuk menentukan baris dam 4 bit terakhir untuk menentukan kolom.
+        # byte 1-8 langsung indexing, kalau byte 9-12 tabel ganjil berurutan 1,3,5,7, byte 13-16 tabel genap berurutan 2,4,6,8
+        # penentuan baris dengan menjumlahkan semua bit
+        # tabel substitusi berukuran 16x16
+        # digenerate dengan menggunakan random.getrandbits(4) dengan seed 420 + n untuk setiap Sn (n dimulai dari 1 untuk S1) yang dimodifikasi agar bisa digunakan baik untuk enkripsi maupun dekripsi (bisa dua arah)
         S1 = [
             [10, 9, 9, 4, 13, 14, 7, 10],
             [7, 4, 5, 8, 13, 13, 7, 6],

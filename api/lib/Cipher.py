@@ -240,8 +240,12 @@ class Cipher:
         return unpermutated
 
     def final_permutation(self, ciphertext: np.ndarray) -> bytes:
-        # Convert to 4-row matrix
-        mat = np.reshape(ciphertext, (4, len(ciphertext) // 4))
+        # First, convert each element of the plaintext into array of 0's and 1's.
+        # Each element of mat will be consisted of an array of 0's and 1's.
+        mat = [0 for _ in range(len(ciphertext))]
+        for i in range(0, len(ciphertext)):
+            mat[i] = np.asarray([int(i) for i in bin(ciphertext[i])[2:].zfill(8)], dtype=np.uint8)
+        mat = np.array(mat)
         # Shift right rows by n
         for i in range(0, len(mat)):
             shift = i + 1
@@ -261,12 +265,16 @@ class Cipher:
         # Transpose
         mat = mat.transpose()
         # Flatten matrix
-        permutated = np.ravel(mat)
+        permutated = np.packbits(mat)
         return permutated.tobytes()
 
     def inverse_final_permutation(self, ciphertext: np.ndarray) -> np.ndarray:
-        # Convert to 4-row matrix
-        mat = np.reshape(ciphertext, (4, len(ciphertext) // 4))
+        # First, convert each element of the plaintext into array of 0's and 1's.
+        # Each element of mat will be consisted of an array of 0's and 1's.
+        mat = [0 for _ in range(len(ciphertext))]
+        for i in range(0, len(ciphertext)):
+            mat[i] = np.asarray([int(i) for i in bin(ciphertext[i])[2:].zfill(8)], dtype=np.uint8)
+        mat = np.array(mat)
         # Transpose
         mat = mat.transpose()
         # Flip odd rows, BEWARE! Index starts at 0, not 1!
@@ -285,8 +293,8 @@ class Cipher:
         for i in range(0, len(mat)):
             shift = i + 1
             mat[i] = np.concatenate([mat[i][shift:], mat[i][:shift]])
-        # Flatten matrix
-        unpermutated = np.ravel(mat)
+        # Convert each mat element to uint8
+        unpermutated = np.packbits(mat)
         return unpermutated
 
     def f(self, right_block: np.ndarray, internal_key: np.ndarray) -> np.ndarray:

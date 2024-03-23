@@ -1,6 +1,6 @@
 from flask import Flask, request, flash, jsonify,send_file
 from werkzeug.utils import secure_filename
-from Cipher import Cipher
+from .Cipher import Cipher
 import time
 import os
 import uuid
@@ -28,8 +28,12 @@ def register_controllers(app: Flask):
             plaintext = file.stream.read()
             original_filename = file.filename
         else:
-            # plaintext murni
-            plaintext = str.encode(request.form["plaintext"])
+            # jika base 64, decode dulu (idk ini string atau boolean)
+            if(request.form["base64check"]):
+                plaintext = base64.b64decode(str.encode(request.form["inputtext"]))
+            else:
+                # plaintext murni
+                plaintext = str.encode(request.form["inputtext"])
         # baca mode
         mode = request.form["mode"]
         # baca key
@@ -72,8 +76,12 @@ def register_controllers(app: Flask):
           ciphertext = file.stream.read()
           original_filename = file.filename
       else:
-          # plaintext murni
-          ciphertext = str.encode(request.form["ciphertext"])
+            # jika base 64, decode dulu (idk ini string atau boolean)
+            if(request.form["base64check"]):
+                ciphertext = base64.b64decode(str.encode(request.form["inputtext"]))
+            else:
+                # plaintext murni
+                ciphertext = str.encode(request.form["inputtext"])
       # baca mode
       mode = request.form["mode"]
       # baca key

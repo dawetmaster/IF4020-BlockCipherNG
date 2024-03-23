@@ -15,8 +15,9 @@ class Cipher():
     prev_cipher = None
     if(mode in ["cbc","cfb","ofb"]):
       #set up IV
+      random.seed(int.from_bytes(key, "big"))
       iv = hex(int.from_bytes(key[:Cipher.KEY_SIZE//2],"big") + int.from_bytes(key[Cipher.KEY_SIZE//2:],"big"))[2:].encode()
-      prev_cipher = np.frombuffer(iv, dtype=np.byte) 
+      prev_cipher = np.frombuffer(iv ^ random.getrandbits(len(plaintext),8), dtype=np.byte) 
     elif (mode == "counter"):
       # initial counter
       random.seed(int.from_bytes(key, "big"))
@@ -35,9 +36,6 @@ class Cipher():
     # convert to numpy bytes
     plaintext = np.frombuffer(plaintext,dtype=np.byte)
     key = np.frombuffer(key,dtype=np.byte)
-
-    # init internal key
-    self.init_internal_key(key)
 
     #enciphering
     for i in range(0,len(plaintext),Cipher.BLOCK_SIZE):
@@ -71,16 +69,16 @@ class Cipher():
   def decrypt(self,ciphertext:bytes,key:bytes,mode:str)->bytes:
     #set up IV
     prev_cipher = None
-    if(mode=="cbc"):
+    if(mode in ["cbc","cfb","ofb"]):
+      #set up IV
+      random.seed(int.from_bytes(key, "big"))
       iv = hex(int.from_bytes(key[:Cipher.KEY_SIZE//2],"big") + int.from_bytes(key[Cipher.KEY_SIZE//2:],"big"))[2:].encode()
-      prev_cipher = np.frombuffer(iv,dtype=np.byte) 
+      prev_cipher = np.frombuffer(iv ^ random.getrandbits(len(plaintext),8), dtype=np.byte) 
     #init plaintext
     plaintext = np.empty(0,dtype=np.byte)
     # convert to numpy bytes
     ciphertext = np.frombuffer(ciphertext,dtype=np.byte)
     key = np.frombuffer(key,dtype=np.byte)
-    # init internal key
-    self.init_internal_key(key)
     #deciphering
     for i in range(0,len(ciphertext),Cipher.BLOCK_SIZE):
       #init block
@@ -121,7 +119,7 @@ class Cipher():
       plaintext = plaintext[:-padding_count]
     return bytes(plaintext)
 
-  def generate_key(self)->np.ndarray[np.byte]:
+  def generate_key(self)->list[bytes]:
     subkeys = []
     # key is represented in 4x4 matrix
     key_mtr = np.frombuffer(self.key, dtype=np.uint8).reshape(4,4)
@@ -155,18 +153,37 @@ class Cipher():
       subkeys.append(subkey)
     return subkeys
 
-
-  def initial_permutation(self,plaintext:np.ndarray[np.byte])->np.ndarray[np.byte]:
+  def initial_permutation(self,plaintext:np.ndarray)->np.ndarray:
     pass
-  def inverse_initial_permutation(self,plaintext:np.ndarray[np.byte])->np.ndarray[np.byte]:
+  def inverse_initial_permutation(self,plaintext:np.ndarray)->np.ndarray:
     pass
-  def final_permutation(self,ciphertext:np.ndarray[np.byte])->bytes:
+  def final_permutation(self,ciphertext:np.ndarray)->bytes:
     pass
-  def inverse_final_permutation(self,ciphertext:np.ndarray[np.byte])->np.ndarray[np.byte]:
+  def inverse_final_permutation(self,ciphertext:np.ndarray)->np.ndarray:
     pass
-  def init_internal_key(self,key:np.ndarray[np.byte])->None:
+  def f(self,right_block:np.ndarray,internal_key:np.ndarray)->np.ndarray:
+    expanded_block = self.block_expansion(right_block)
+    A = expanded_block ^ internal_key
+    B = self.substitute(A)
+    return self.permutate(B)
+  
+  def inv_f(self,left_block:np.ndarray,internal_key:np.ndarray)->np.ndarray:
+    B = self.inverse_permutate(left_block)
+    A = self.inverse_substitute(B)
+    original_block = A ^ internal_key
+    return self.block_reduction(original_block)
+  
+  def block_expansion(self,right_block:np.ndarray)->np.ndarray:
+    #expand right_block dari 8 bytes menjadi 16 bytes (sama kek panjang kunci)
+    index = [0, 2, 4, 6, 7, 6, 5, 4, 3, 2, 1, 0, 1, 3, 5, 7] # byte pertama -> indeks 0
+    return np.array(right_block[i] for i in index)
+  def block_reduction(self,original_block:np.ndarray)->np.ndarray:
     pass
-  def f(self,right_block:np.ndarray[np.byte],internal_key:np.ndarray[np.byte])->np.ndarray[np.byte]:
+  def substitute(self,A:np.ndarray)->np.ndarray:
     pass
-  def inv_f(self,left_block:np.ndarray[np.byte],internal_key:np.ndarray[np.byte])->np.ndarray[np.byte]:
+  def inverse_substitute(self,B:np.ndarray)->np.ndarray:
+    pass
+  def permutate(self,B:np.ndarray)->np.ndarray:
+    pass
+  def inverse_permutate(self,left_block:np.ndarray)->np.ndarray:
     pass

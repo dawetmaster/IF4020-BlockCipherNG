@@ -166,8 +166,12 @@ class Cipher:
         return subkeys
 
     def initial_permutation(self, plaintext: np.ndarray) -> np.ndarray:
-        # Convert to 4-row matrix
-        mat = np.reshape(plaintext, (4, len(plaintext) // 4))
+        # First, convert each element of the plaintext into array of 0's and 1's.
+        # Each element of mat will be consisted of an array of 0's and 1's.
+        mat = [0 for _ in range(len(plaintext))]
+        for i in range(0, len(plaintext)):
+            mat[i] = np.asarray([int(i) for i in bin(plaintext[i])[2:].zfill(8)], dtype=np.uint8)
+        mat = np.array(mat)
         # Flip odd rows, BEWARE! Index starts at 0, not 1!
         for i in range(1, len(mat), 2):
             mat[i] = np.flip(mat[i])
@@ -194,13 +198,17 @@ class Cipher:
         for i in range(1, len(mat), 2):
             shift = (i // 2) + 1
             mat[i] = np.concatenate([mat[i][-shift:], mat[i][:-shift]])
-        # Flatten matrix
-        permutated = np.ravel(mat)
+        # Convert each mat element to uint8
+        permutated = np.packbits(mat)
         return permutated
 
     def inverse_initial_permutation(self, plaintext: np.ndarray) -> np.ndarray:
-        # Convert to 4-row matrix
-        mat = np.reshape(plaintext, (4, len(plaintext) // 4))
+        # First, convert each element of the plaintext into array of 0's and 1's.
+        # Each element of mat will be consisted of an array of 0's and 1's.
+        mat = [0 for _ in range(len(plaintext))]
+        for i in range(0, len(plaintext)):
+            mat[i] = np.asarray([int(i) for i in bin(plaintext[i])[2:].zfill(8)], dtype=np.uint8)
+        mat = np.array(mat)
         # For even rows, shift right by n, and for odd rows, shift left by n
         # BEWARE! Index starts at 0, not 1!
         for i in range(0, len(mat), 2):
@@ -227,8 +235,8 @@ class Cipher:
         # Flip odd rows, BEWARE! Index starts at 0, not 1!
         for i in range(1, len(mat), 2):
             mat[i] = np.flip(mat[i])
-        # Flatten matrix
-        unpermutated = np.ravel(mat)
+        # Convert each mat element to uint8
+        unpermutated = np.packbits(mat)
         return unpermutated
 
     def final_permutation(self, ciphertext: np.ndarray) -> bytes:

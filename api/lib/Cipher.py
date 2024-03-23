@@ -232,10 +232,54 @@ class Cipher:
         return unpermutated
 
     def final_permutation(self, ciphertext: np.ndarray) -> bytes:
-        pass
+        # Convert to 4-row matrix
+        mat = np.reshape(ciphertext, (4, len(ciphertext) // 4))
+        # Shift right rows by n
+        for i in range(0, len(mat)):
+            shift = i + 1
+            mat[i] = np.concatenate([mat[i][-shift:], mat[i][:-shift]])
+        # Flip odd rows, BEWARE! Index starts at 0, not 1!
+        for i in range(1, len(mat), 2):
+            mat[i] = np.flip(mat[i])
+        # Transpose
+        mat = mat.transpose()
+        # Shift left rows by n
+        for i in range(0, len(mat)):
+            shift = i + 1
+            mat[i] = np.concatenate([mat[i][shift:], mat[i][:shift]])
+        # Flip odd rows, BEWARE! Index starts at 0, not 1!
+        for i in range(1, len(mat), 2):
+            mat[i] = np.flip(mat[i])
+        # Transpose
+        mat = mat.transpose()
+        # Flatten matrix
+        permutated = np.ravel(mat)
+        return permutated.tobytes()
 
     def inverse_final_permutation(self, ciphertext: np.ndarray) -> np.ndarray:
-        pass
+        # Convert to 4-row matrix
+        mat = np.reshape(ciphertext, (4, len(ciphertext) // 4))
+        # Transpose
+        mat = mat.transpose()
+        # Flip odd rows, BEWARE! Index starts at 0, not 1!
+        for i in range(1, len(mat), 2):
+            mat[i] = np.flip(mat[i])
+        # Shift right rows by n
+        for i in range(0, len(mat)):
+            shift = i + 1
+            mat[i] = np.concatenate([mat[i][-shift:], mat[i][:-shift]])
+        # Transpose
+        mat = mat.transpose()
+        # Flip odd rows, BEWARE! Index starts at 0, not 1!
+        for i in range(1, len(mat), 2):
+            mat[i] = np.flip(mat[i])
+        # Shift left rows by n
+        for i in range(0, len(mat)):
+            shift = i + 1
+            mat[i] = np.concatenate([mat[i][shift:], mat[i][:shift]])
+        # Flatten matrix
+        unpermutated = np.ravel(mat)
+        return unpermutated
 
     def f(self, right_block: np.ndarray, internal_key: np.ndarray) -> np.ndarray:
         expanded_block = self.block_expansion(right_block)

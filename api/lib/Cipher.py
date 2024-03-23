@@ -166,10 +166,70 @@ class Cipher:
         return subkeys
 
     def initial_permutation(self, plaintext: np.ndarray) -> np.ndarray:
-        pass
+        # Convert to 4-row matrix
+        mat = np.reshape(plaintext, (4, len(plaintext) // 4))
+        # Flip odd rows, BEWARE! Index starts at 0, not 1!
+        for i in range(1, len(mat), 2):
+            mat[i] = np.flip(mat[i])
+        # Transpose
+        mat = mat.transpose()
+        # Flip odd rows, BEWARE! Index starts at 0, not 1!
+        for i in range(1, len(mat), 2):
+            mat[i] = np.flip(mat[i])
+        # For even rows, shift left by n, and for odd rows, shift right by n
+        # BEWARE! Index starts at 0, not 1!
+        for i in range(0, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][shift:], mat[i][:shift]])
+        for i in range(1, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][-shift:], mat[i][:-shift]])
+        # Transpose
+        mat = mat.transpose()
+        # For even rows, shift left by n, and for odd rows, shift right by n
+        # BEWARE! Index starts at 0, not 1!
+        for i in range(0, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][shift:], mat[i][:shift]])
+        for i in range(1, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][-shift:], mat[i][:-shift]])
+        # Flatten matrix
+        permutated = np.ravel(mat)
+        return permutated
 
     def inverse_initial_permutation(self, plaintext: np.ndarray) -> np.ndarray:
-        pass
+        # Convert to 4-row matrix
+        mat = np.reshape(plaintext, (4, len(plaintext) // 4))
+        # For even rows, shift right by n, and for odd rows, shift left by n
+        # BEWARE! Index starts at 0, not 1!
+        for i in range(0, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][-shift:], mat[i][:-shift]])
+        for i in range(1, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][shift:], mat[i][:shift]])
+        # Transpose
+        mat = mat.transpose()
+        # For even rows, shift right by n, and for odd rows, shift left by n
+        # BEWARE! Index starts at 0, not 1!
+        for i in range(0, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][-shift:], mat[i][:-shift]])
+        for i in range(1, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][shift:], mat[i][:shift]])
+        # Flip odd rows, BEWARE! Index starts at 0, not 1!
+        for i in range(1, len(mat), 2):
+            mat[i] = np.flip(mat[i])
+        # Transpose
+        mat = mat.transpose()
+        # Flip odd rows, BEWARE! Index starts at 0, not 1!
+        for i in range(1, len(mat), 2):
+            mat[i] = np.flip(mat[i])
+        # Flatten matrix
+        unpermutated = np.ravel(mat)
+        return unpermutated
 
     def final_permutation(self, ciphertext: np.ndarray) -> bytes:
         pass

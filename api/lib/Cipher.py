@@ -176,9 +176,10 @@ class Cipher():
   def block_expansion(self,right_block:np.ndarray)->np.ndarray:
     #expand right_block dari 8 bytes menjadi 16 bytes (sama kek panjang kunci)
     index = [0, 2, 4, 6, 7, 6, 5, 4, 3, 2, 1, 0, 1, 3, 5, 7] # byte pertama -> indeks 0
-    return np.array(right_block[i] for i in index)
+    return np.array([right_block[i] for i in index])
   def block_reduction(self,original_block:np.ndarray)->np.ndarray:
-    pass
+    # reduksi blok dari 16 bytes menjadi 8 bytes
+    return np.array([original_block[-5:-13:-1]])
   def substitute(self,A:np.ndarray)->np.ndarray:
     pass
   def inverse_substitute(self,B:np.ndarray)->np.ndarray:

@@ -61,13 +61,25 @@ class Cipher:
             for j in range(Cipher.ROUNDS):
                 # processed_right = self.f(right_block, self.subkeys[j])
                 # processed_left = left_block ^ processed_right
-                processed_block = self.f(block, self.subkeys[j])
+                subkey = np.frombuffer(self.subkeys[j],dtype=np.byte)
+                processed_block = self.f(block,subkey )
+                print("a")
+                print(right_block,len(right_block))
+                print(left_block,len(left_block))
                 processed_left = (
-                    np.concatenate(right_block, left_block) ^ processed_block
+                    np.concatenate((right_block, left_block)) ^ processed_block
                 )
+                print(np.concatenate((right_block, left_block)),len(np.concatenate((right_block, left_block))))
+                print(processed_block,len(processed_block))
                 # swap
-                left_block = right_block
-                right_block = processed_left
+                print("b")
+                print(right_block,len(right_block))
+                print(left_block,len(left_block))
+                print("c")
+                left_block = processed_block[: (Cipher.BLOCK_SIZE // 2)]
+                right_block = processed_block[(Cipher.BLOCK_SIZE // 2) :]
+                # left_block = right_block
+                # right_block = processed_left
             # final permutation
             block = np.concatenate([left_block, right_block])
             block = self.final_permutation(block)
@@ -109,13 +121,16 @@ class Cipher:
             for j in range(Cipher.ROUNDS):
                 # processed_left = self.inv_f(left_block, self.subkeys[j])
                 # processed_right = right_block ^ processed_left
-                processed_block = self.inv_f(block, self.subkeys[j])
+                subkey = np.frombuffer(self.subkeys[j],dtype=np.byte)
+                processed_block = self.inv_f(block, subkey)
                 processed_right = (
-                    np.concatenate(right_block, left_block) ^ processed_block
+                    np.concatenate((right_block, left_block)) ^ processed_block
                 )
                 # swap
-                left_block = processed_right
-                right_block = left_block
+                left_block = processed_block[: (Cipher.BLOCK_SIZE // 2)]
+                right_block = processed_block[(Cipher.BLOCK_SIZE // 2) :]
+                # left_block = processed_right
+                # right_block = left_block
             block = np.concatenate([left_block, right_block])
             # initial permutation
             block = self.inverse_initial_permutation(block)
@@ -215,7 +230,7 @@ class Cipher:
         # Each element of mat will be consisted of an array of 0's and 1's.
         mat = [0 for _ in range(len(plaintext))]
         for i in range(0, len(plaintext)):
-            mat[i] = np.asarray([int(i) for i in bin(plaintext[i])[2:].zfill(8)], dtype=np.uint8)
+            mat[i] = np.asarray([int(i) for i in bin(plaintext[i]).replace("-","")[2:].zfill(8)], dtype=np.uint8)
         mat = np.array(mat)
         # For even rows, shift right by n, and for odd rows, shift left by n
         # BEWARE! Index starts at 0, not 1!
@@ -250,9 +265,11 @@ class Cipher:
     def final_permutation(self, ciphertext: np.ndarray) -> bytes:
         # First, convert each element of the plaintext into array of 0's and 1's.
         # Each element of mat will be consisted of an array of 0's and 1's.
+        print(ciphertext)
         mat = [0 for _ in range(len(ciphertext))]
         for i in range(0, len(ciphertext)):
-            mat[i] = np.asarray([int(i) for i in bin(ciphertext[i])[2:].zfill(8)], dtype=np.uint8)
+            # print(bin(ciphertext[i]).replace("-",''))
+            mat[i] = np.asarray([int(i) for i in bin(ciphertext[i]).replace("-",'')[2:].zfill(8)], dtype=np.uint8)
         mat = np.array(mat)
         # Shift right rows by n
         for i in range(0, len(mat)):
@@ -281,7 +298,7 @@ class Cipher:
         # Each element of mat will be consisted of an array of 0's and 1's.
         mat = [0 for _ in range(len(ciphertext))]
         for i in range(0, len(ciphertext)):
-            mat[i] = np.asarray([int(i) for i in bin(ciphertext[i])[2:].zfill(8)], dtype=np.uint8)
+            mat[i] = np.asarray([int(i) for i in bin(ciphertext[i]).replace("-",'')[2:].zfill(8)], dtype=np.uint8)
         mat = np.array(mat)
         # Transpose
         mat = mat.transpose()
@@ -615,8 +632,8 @@ class Cipher:
             ],
         ]
         for i in range(Cipher.KEY_SIZE):
-            row = A & 0xF0
-            column = A & 0x0F
+            row = (A[i] & 0xF0)>>4
+            column = A[i] & 0x0F
             block[i] = S_BOX[row][column]
         return block
 
@@ -913,8 +930,8 @@ class Cipher:
             ],
         ]
         for i in range(Cipher.KEY_SIZE):
-            row = B & 0xF0
-            column = B & 0x0F
+            row = (B[i] & 0xF0)>>4
+            column = B[i] & 0x0F
             block[i] = INV_S_BOX[row][column]
         return block
 
@@ -930,4 +947,17 @@ class Cipher:
 
 if __name__ == "__main__":
     c = Cipher(str.encode("abcdefghijklmnop"))
-    print(c.substitute(str.encode("qrstuvwxyz012345")).tobytes())
+    # res = c.substitute(np.frombuffer(str.encode("qrstuvwxyz012345"),dtype=np.byte))
+    # print(res.tobytes())
+    # print(c.inverse_substitute(res))
+    # print(c.inverse_substitute(res).tobytes())
+
+    # tes enkripsi
+    #"qrstuAwxyz012345" -> 'L*\x80\xa5q*,6\xc0T&I\x84.@\xe1'
+    #"qrstvAwxyz012345" ->b'L"\x04\x85q*,6\xc0T&\t\x84>H\xe3'
+    plaintext = np.frombuffer(str.encode("qrstuAwxyz012355"),dtype=np.byte)
+    ciphertext = c.encrypt(plaintext,c.key,'ecb')
+    print(f"Ciphertext: {ciphertext}")
+    # tes dekripsi
+    reverse_plaintext = c.decrypt(ciphertext,c.key,"ecb")
+    print(f"PLaintext: {reverse_plaintext}")

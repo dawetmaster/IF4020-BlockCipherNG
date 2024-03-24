@@ -40,7 +40,6 @@ class Cipher:
 
         # convert to numpy bytes
         plaintext = np.frombuffer(plaintext, dtype=np.uint8)
-        # print(plaintext)
         key = np.frombuffer(key, dtype=np.uint8)
 
         # enciphering
@@ -49,35 +48,20 @@ class Cipher:
             start_index = i * Cipher.BLOCK_SIZE
             # slice
             block = plaintext[start_index : start_index + Cipher.BLOCK_SIZE]
-            # print(block)
             # XOR kan dengan ciphertext sebelumnya bila mode CBC
             if mode == "cbc":
                 block = block ^ prev_cipher
             # initial permutation
             block = self.initial_permutation(block)
             # partisi
-            left_block = block[: (Cipher.BLOCK_SIZE // 2)]
-            right_block = block[(Cipher.BLOCK_SIZE // 2) :]
             for j in range(Cipher.ROUNDS):
-                # processed_right = self.f(right_block, self.subkeys[j])
-                # processed_left = left_block ^ processed_right
-                # bit permutation
-                block = self.initial_permutation(block)
-                #xor plainteks dengan key
+                # get subkey
                 subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
+                # bit permutation
+                block = self.bit_permutation(block)
+                #f function
                 block = self.f(block,subkey )
-                # block = processed_block ^ (np.concatenate(right_block,left_block))
-                left_block = block[: (Cipher.BLOCK_SIZE // 2)]
-                right_block = block[(Cipher.BLOCK_SIZE // 2) :]
-                # processed_left = (
-                #     np.concatenate((right_block, left_block)) ^ processed_block
-                # )
-                # left_block = processed_block[: (Cipher.BLOCK_SIZE // 2)]
-                # right_block = processed_block[(Cipher.BLOCK_SIZE // 2) :]
-                # left_block = right_block
-                # right_block = processed_left[(Cipher.BLOCK_SIZE // 2) :]
             # final permutation
-            # block = np.concatenate([left_block, right_block])
             block = np.frombuffer(self.final_permutation(block),dtype=np.uint8)
             # ganti prev_cipher
             prev_cipher = block
@@ -109,27 +93,10 @@ class Cipher:
             block = ciphertext[start_index : start_index + Cipher.BLOCK_SIZE]
             # inverse final permutation
             block = self.inverse_final_permutation(block)
-            # partisi
-            left_block = block[: (Cipher.BLOCK_SIZE // 2)]
-            right_block = block[(Cipher.BLOCK_SIZE // 2) :]
-            processed_right = right_block
             for j in range(Cipher.ROUNDS-1,-1,-1):
                 subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
-                # swap
-                # left_block = processed_block[: (Cipher.BLOCK_SIZE // 2)]
-                # right_block = processed_block[(Cipher.BLOCK_SIZE // 2) :]
-                # left_block = processed_right
-                # right_block = left_block
-                # processed_left = self.inv_f(left_block, self.subkeys[j])
-                # processed_right = right_block ^ processed_left
-                processed_block = self.inv_f(block, subkey)
-                block = processed_block
-                # block = self.inverse_final_permutation(block)
-                block = self.inverse_initial_permutation(block)
-                # processed_right = (
-                #     np.concatenate((right_block, left_block)) ^ processed_block
-                # )
-            # block = np.concatenate([left_block, right_block])
+                block = self.inv_f(block, subkey)
+                block = self.inverse_bit_permutation(block)
             # initial permutation
             block = self.inverse_initial_permutation(block)
             # XOR kan dengan ciphertext sebelumnya bila mode CBC
@@ -138,7 +105,6 @@ class Cipher:
             # ganti prev_cipher
             prev_cipher = np.frombuffer(ciphertext[start_index : start_index + Cipher.BLOCK_SIZE],dtype=np.uint8)
             # append
-            # print("b",block)
             plaintext = np.append(plaintext, block)
         # remove padding
         # cek apakah ada padding
@@ -190,7 +156,6 @@ class Cipher:
     def initial_permutation(self, plaintext: np.ndarray) -> np.ndarray:
         # First, convert each element of the plaintext into array of 0's and 1's.
         # Each element of mat will be consisted of an array of 0's and 1's.
-        # print("plain enc",plaintext)
         mat = [0 for _ in range(len(plaintext))]
         for i in range(0, len(plaintext)):
             mat[i] = np.asarray([int(i) for i in bin(plaintext[i])[2:].zfill(8)], dtype=np.uint8)
@@ -223,7 +188,6 @@ class Cipher:
             mat[i] = np.concatenate([mat[i][-shift:], mat[i][:-shift]])
         # Convert each mat element to uint8
         permutated = np.packbits(mat)
-        # print("perm enc",permutated)
         return permutated
 
     def inverse_initial_permutation(self, plaintext: np.ndarray) -> np.ndarray:
@@ -370,58 +334,16 @@ class Cipher:
                 0x45,0xF9,0x02,0x7F,0x50,0x3C,0x9F,0xA8,
             ],
             [
-                0x51,
-                0xA3,
-                0x40,
-                0x8F,
-                0x92,
-                0x9D,
-                0x38,
-                0xF5,
-                0xBC,
-                0xB6,
-                0xDA,
-                0x21,
-                0x10,
-                0xFF,
-                0xF3,
-                0xD2,
+                0x51,0xA3,0x40,0x8F,0x92,0x9D,0x38,0xF5, 
+                0xBC,0xB6,0xDA,0x21,0x10,0xFF,0xF3,0xD2,
             ],
             [
-                0xCD,
-                0x0C,
-                0x13,
-                0xEC,
-                0x5F,
-                0x97,
-                0x44,
-                0x17,
-                0xC4,
-                0xA7,
-                0x7E,
-                0x3D,
-                0x64,
-                0x5D,
-                0x19,
-                0x73,
+                0xCD,0x0C,0x13,0xEC,0x5F,0x97,0x44,0x17, 
+                0xC4,0xA7,0x7E,0x3D,0x64,0x5D,0x19,0x73,
             ],
             [
-                0x60,
-                0x81,
-                0x4F,
-                0xDC,
-                0x22,
-                0x2A,
-                0x90,
-                0x88,
-                0x46,
-                0xEE,
-                0xB8,
-                0x14,
-                0xDE,
-                0x5E,
-                0x0B,
-                0xDB,
+                0x60,0x81,0x4F,0xDC,0x22,0x2A,0x90,0x88, 
+                0x46,0xEE,0xB8,0x14,0xDE,0x5E,0x0B,0xDB,
             ],
             [
                 0xE0,
@@ -542,58 +464,16 @@ class Cipher:
         block = np.zeros(Cipher.BLOCK_SIZE, dtype=np.uint8)
         INV_S_BOX = [
             [
-                0x52,
-                0x09,
-                0x6A,
-                0xD5,
-                0x30,
-                0x36,
-                0xA5,
-                0x38,
-                0xBF,
-                0x40,
-                0xA3,
-                0x9E,
-                0x81,
-                0xF3,
-                0xD7,
-                0xFB,
+                0x52,0x09,0x6A,0xD5,0x30,0x36,0xA5,0x38, 
+                0xBF,0x40,0xA3,0x9E,0x81,0xF3,0xD7,0xFB,
             ],
             [
-                0x7C,
-                0xE3,
-                0x39,
-                0x82,
-                0x9B,
-                0x2F,
-                0xFF,
-                0x87,
-                0x34,
-                0x8E,
-                0x43,
-                0x44,
-                0xC4,
-                0xDE,
-                0xE9,
-                0xCB,
+                0x7C,0xE3,0x39,0x82,0x9B,0x2F,0xFF,0x87, 
+                0x34,0x8E,0x43,0x44,0xC4,0xDE,0xE9,0xCB,
             ],
             [
-                0x54,
-                0x7B,
-                0x94,
-                0x32,
-                0xA6,
-                0xC2,
-                0x23,
-                0x3D,
-                0xEE,
-                0x4C,
-                0x95,
-                0x0B,
-                0x42,
-                0xFA,
-                0xC3,
-                0x4E,
+                0x54,0x7B,0x94,0x32,0xA6,0xC2,0x23,0x3D, 
+                0xEE,0x4C,0x95,0x0B,0x42,0xFA,0xC3,0x4E,
             ],
             [
                 0x08,
@@ -844,81 +724,95 @@ class Cipher:
     def inverse_permutate(self, left_block: np.ndarray) -> np.ndarray:
         INVERSE_P_BOX = [3, 8, 12, 10, 2, 14, 9, 15, 1, 4, 7, 13, 0, 11, 5, 6]
         return np.array([left_block[INVERSE_P_BOX[i]] for i in range(Cipher.BLOCK_SIZE)],dtype=np.uint8)
-
+    
+    def bit_permutation(self, plaintext: np.ndarray) -> np.ndarray:
+        # First, convert each element of the plaintext into array of 0's and 1's.
+        # Each element of mat will be consisted of an array of 0's and 1's.
+        mat = [0 for _ in range(len(plaintext))]
+        for i in range(0, len(plaintext)):
+            mat[i] = np.asarray([int(i) for i in bin(plaintext[i])[2:].zfill(8)], dtype=np.uint8)
+        mat = np.array(mat)
+        # Flip even rows, BEWARE! Index starts at 0, not 1!
+        for i in range(0,len(mat), 2):
+            mat[i] = np.flip(mat[i])
+        # Transpose
+        mat = mat.transpose()
+        # Flip even rows, BEWARE! Index starts at 0, not 1!
+        for i in range(0,len(mat), 2):
+            mat[i] = np.flip(mat[i])
+        # For odd rows, shift left by n, and for even rows, shift right by n
+        # BEWARE! Index starts at 0, not 1!
+        for i in range(1, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][shift:], mat[i][:shift]])
+        for i in range(0, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][-shift:], mat[i][:-shift]])
+        # Transpose
+        mat = mat.transpose()
+        # For odd rows, shift left by n, and for even rows, shift right by n
+        # BEWARE! Index starts at 0, not 1!
+        for i in range(1, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][shift:], mat[i][:shift]])
+        for i in range(0, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][-shift:], mat[i][:-shift]])
+        # Convert each mat element to uint8
+        permutated = np.packbits(mat)
+        return permutated
+    def inverse_bit_permutation(self, plaintext: np.ndarray) -> np.ndarray:
+        # First, convert each element of the plaintext into array of 0's and 1's.
+        # Each element of mat will be consisted of an array of 0's and 1's.
+        mat = [0 for _ in range(len(plaintext))]
+        for i in range(0, len(plaintext)):
+            mat[i] = np.asarray([int(i) for i in bin(plaintext[i]).replace("-","")[2:].zfill(8)], dtype=np.uint8)
+        mat = np.array(mat)
+        # For odd rows, shift right by n, and for even rows, shift left by n
+        # BEWARE! Index starts at 0, not 1!
+        for i in range(1, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][-shift:], mat[i][:-shift]])
+        for i in range(0, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][shift:], mat[i][:shift]])
+        # Transpose
+        mat = mat.transpose()
+        # For odd rows, shift right by n, and for even rows, shift left by n
+        # BEWARE! Index starts at 0, not 1!
+        for i in range(1, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][-shift:], mat[i][:-shift]])
+        for i in range(0, len(mat), 2):
+            shift = (i // 2) + 1
+            mat[i] = np.concatenate([mat[i][shift:], mat[i][:shift]])
+        # Flip even rows, BEWARE! Index starts at 0, not 1!
+        for i in range(0, len(mat), 2):
+            mat[i] = np.flip(mat[i])
+        # Transpose
+        mat = mat.transpose()
+        # Flip even rows, BEWARE! Index starts at 0, not 1!
+        for i in range(0, len(mat), 2):
+            mat[i] = np.flip(mat[i])
+        # Convert each mat element to uint8
+        unpermutated = np.packbits(mat)
+        return unpermutated
 
 if __name__ == "__main__":
     c = Cipher(str.encode("abcdefghijklmnop"))
     # res = c.substitute(np.frombuffer(str.encode("qrstuvwxyz012345"),dtype=np.uint8))
 
     # tes enkripsi
-    #"qrstuAwxyz012345" -> 'L*\x80\xa5q*,6\xc0T&I\x84.@\xe1'
-    #"qrstvAwxyz012345" ->b'L"\x04\x85q*,6\xc0T&\t\x84>H\xe3'
-    # plaintext = np.frombuffer(str.encode("halohalobandung ibukota pariaman. Sudah laman214uiweofewoiferhi"),dtype=np.uint8)
-    plaintext = str.encode("iamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7'")
+    plaintext = str.encode("hamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7\\")
     print("plain",bytes(plaintext))
-    # ciphertext = c.encrypt(plaintext,c.key,'ecb')
-    # print(f"Ciphertext ECB: {ciphertext}")
+    ciphertext = c.encrypt(plaintext,c.key,'ecb')
+    print(f"Ciphertext ECB: {ciphertext}")
+    # tes dekripsi
+    reverse_plaintext = c.decrypt(ciphertext,c.key,"ebc")
+    print(f"PLaintext EBC: {reverse_plaintext}")
+    # cbc
     ciphertext = c.encrypt(plaintext,c.key,'cbc')
     print(f"Ciphertext CBC: {ciphertext}")
     # tes dekripsi
     reverse_plaintext = c.decrypt(ciphertext,c.key,"cbc")
-    print(f"PLaintext: {reverse_plaintext}")
-
-    # print("PLAINTEKS:",bytes(plaintext))
-    # print("REVERSED_PLAINTEKS",c.decrypt(c.encrypt(plaintext,c.key,'ecb'),c.key,'ecb'))
-    #'R\t\xf8\x03\x1b\x98\xdca_\r\xfa\xda\xfe8\x84\xfd'
-    #'R\t\xf8\x03\x1b\x98\xdca[\r\xda\xda~8\x84\xfd'
-
-    #plain b'qrstuAvxyz012365'
-    #Ciphertext: b'\xed \xd5 \x91 j \x8e \xc5 ; y z \xf6 k \xff . \xe3 i K'
-    #plain b'qrsruAvxyz012365'
-    #Ciphertext: b'z \x91 \xdc \x9d \x9b n g \x86 2 \xf4 \x1e 8 \x9b \xbb \xc6 \x1e'
-
-"""
-plain b'halohalobandung ibukota pariaman. Sudah laman214uiweofewoiferhi'
-Ciphertext: b'S"1:\xb8+,\xed\xf7\x8c\xb3\x17`A\xa5\xb1\xf5\xd6\xe9\xce{V\x1c\x1e\xcc\x80\x1b\xf5\x8e\xac\xcb\xa7j\x92~\xd6\x94\xcf\xcd!\x84\xe0hO\xc3\x15\xece\x1f%4\t\xccF\xef\xbe\xb6\xce^\x14 \x96\x929'
-"""
-"""
-plain b'hamohalobandung ibukota pariaman. Sudah laman214uiweofewoiferhi'
-Ciphertext: b':`j\xfcz\x1cc\xb6\xe4\xfc^\xf9\xcb\xf1\xc33\xf5\xd6\xe9\xce{V\x1c\x1e\xcc\x80\x1b\xf5\x8e\xac\xcb\xa7j\x92~\xd6\x94\xcf\xcd!\x84\xe0hO\xc3\x15\xece\x1f%4\t\xccF\xef\xbe\xb6\xce^\x14 \x96\x929'
-"""
-"""
-plain b'halohalobandung ibukota pbriaman. Sudah laman214uiweofewoiferhi'
-Ciphertext: b'S"1:\xb8+,\xed\xf7\x8c\xb3\x17`A\xa5\xb1\xed\x0c@\x1f6\xe5\xf73Q\x93\x82\xe7B\'\x9b\x16j\x92~\xd6\x94\xcf\xcd!\x84\xe0hO\xc3\x15\xece\x1f%4\t\xccF\xef\xbe\xb6\xce^\x14 \x96\x929'
-"""
-
-"""
-Ciphertext ECB: b':`j\xfcz\x1cc\xb6\xe4\xfc^\xf9\xcb\xf1\xc33\xf5\xd6\xe9\xce{V\x1c\x1e\xcc\x80\x1b\xf5\x8e\xac\xcb\xa7j\x92~\xd6\x94\xcf\xcd!\x84\xe0hO\xc3\x15\xece\x1f%4\t\xccF\xef\xbe\xb6\xce^\x14 \x96\x929'
-
-Ciphertext CBC: b'v\x89}\x1b+\xa1\x1c7\x92]\xe3 f\xeb\x04.\xf0`#=e\xa7\x8fd*\x02pC\xf8\xb3\x93\xa4\x1c{\xa4@y\xcbT\xadmC\xd5\xfe\x07^\t3\x80\xbf\xcf\x11y,\xc8\xc6vK\xfc\xf7\x95\x0e+\xda'
-"""
-
-"""
-Ciphertext ECB: b':`j\xfcz\x1cc\xb6\xe4\xfc^\xf9\xcb\xf1\xc33\x00 D1\\V\xdfQt\xd8a\xf0{\xd0B\x1fj\x92~\xd6\x94\xcf\xcd!\x84\xe0hO\xc3\x15\xece\x1f%4\t\xccF\xef\xbe\xb6\xce^\x14 \x96\x929'
-Ciphertext CBC: b'v\x89}\x1b+\xa1\x1c7\x92]\xe3 f\xeb\x04.\x89.\x10\xaa"\xc2\x0fg/\xa0\x00\x9f\x0bi\xf8%\xc4;\xa0H\x90\x15M\xdd+\xa6\x08o!\xb3*h\xb6qSIw\xa8\x03\xb9~N&#\xca\x8fv\x9c'
-"""
-
-"""
-plain b'hamohalobandung ibvkota pariaman. Sudah laman214uiweofewoiferhi'
-Ciphertext CBC: b'v\x89}\x1b+\xa1\x1c7\x92]\xe3 f\xeb\x04.\x89.\x10\xaa"\xc2\x0fg/\xa0\x00\x9f\x0bi\xf8%\xc4;\xa0H\x90\x15M\xdd+\xa6\x08o!\xb3*h\xb6qSIw\xa8\x03\xb9~N&#\xca\x8fv\x9c'
-"""
-"""
-plain b'iamohalobandung ibvkota pariaman. Sudah laman214uiweofewoiferhi'
-Ciphertext CBC: b'y3t7\xbdM\xc5cpc\xab\x80\x90$\xf1j\xff\x1e\xdd\x15\xcf\xa3\xd0\x8f\xcbG\x82E\x14\xc2\x18\xb9[\x98\xcafFL}\xf0\x9c\x8c\xb2\xf9\x1bW\xf9(\xfd\xcc\xe4\xfa\x82\xf9-\x1a\xfbk\xa8P%\xe0\xe2\xcf'
-"""
-"""
-plain b'iamojalobandung ibvkota pariaman. Sudah laman214uiweofewoiferhi'
-Ciphertext CBC: b'OB\x90\x0b\xb4\xa9\xfeSjCN~J\xae\xa5\x9f\x0bk\x7f\xa6\xe5;\x89u\n\xc0\xe6\x0b\x9c\xce\x08\x90J\x0b\x8a\xdc\xe3+\x0e\xd0)\xef\r\x9e_\xb5L)\x80\x92\xe4\x99S)\xb5.l6\xee\x93\xd5\xf9\x9e>'
-"""
-"""
-plain b'iamojalobandung ibvkota par0aman. Sudah laman214uiweofewoiferhi'
-Ciphertext CBC: b'OB\x90\x0b\xb4\xa9\xfeSjCN~J\xae\xa5\x9fs@\x1c\xab\xfd\x83\xec}\xd3\xf0+\x8f\xfa\xe4\xea\x9a\x85\xb5\xa6u\xd8\xf8\x95 \xfc\x03N\xba\x18\x18\x0f\xb0\xff\xcb\xe4\xc5\x15>\xfcp>\x82\xb4\x8a\x159\xff0'
-"""
-"""
-plain b'iamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7i'
-Ciphertext CBC: b'OB\x90\x0b\xb4\xa9\xfeSjCN~J\xae\xa5\x9fs@\x1c\xab\xfd\x83\xec}\xd3\xf0+\x8f\xfa\xe4\xea\x9a\x85\xb5\xa6u\xd8\xf8\x95 \xfc\x03N\xba\x18\x18\x0f\xb0[w\xdf\xe7\xc9:P|z\x1as\xe9\x02\xd1\xb2\xed'
-"""
-"""
-plain b"iamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7'"
-Ciphertext CBC: b'OB\x90\x0b\xb4\xa9\xfeSjCN~J\xae\xa5\x9fs@\x1c\xab\xfd\x83\xec}\xd3\xf0+\x8f\xfa\xe4\xea\x9a\x85\xb5\xa6u\xd8\xf8\x95 \xfc\x03N\xba\x18\x18\x0f\xb0!\xb5t;l\xc9\x80\x82\x8dAT\xecQ_\xe4\x86'
-"""
+    print(f"PLaintext CBC: {reverse_plaintext}")

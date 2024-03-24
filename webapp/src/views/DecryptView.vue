@@ -19,7 +19,7 @@ async function handleEncryptionSubmission(formData: FormData) {
   )
     .then((res) => {
       console.log(res.data)
-      output.value = res.data.ciphertext;
+      output.value = res.data.plaintext;
       exec_time.value = `Execution time: ${res.data.elapsed_time} seconds`;
       href_file.value = `${import.meta.env.VITE_BE_BASE_URL}/download/${res.data.download_filename}`;
       error_msg.value = '';

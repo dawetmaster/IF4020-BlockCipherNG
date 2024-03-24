@@ -23,7 +23,7 @@ class Cipher:
                 + int.from_bytes(key[Cipher.KEY_SIZE // 2 :], "big")
             )[2:].encode()
             prev_cipher = np.frombuffer(
-                iv ^ random.getrandbits(len(plaintext), 8), dtype=np.byte
+                iv ^ random.getrandbits(len(plaintext), 8), dtype=np.uint8
             )
         elif mode == "counter":
             # initial counter
@@ -31,7 +31,7 @@ class Cipher:
             counter = random.getrandbits(len(plaintext) * 8)
 
         # init ciphertext
-        ciphertext = np.empty(0, dtype=np.byte)
+        ciphertext = np.empty(0, dtype=np.uint8)
 
         # padding
         remainder = len(plaintext) % Cipher.BLOCK_SIZE
@@ -41,8 +41,8 @@ class Cipher:
             plaintext += bytes(pad_size * [pad_size])
 
         # convert to numpy bytes
-        plaintext = np.frombuffer(plaintext, dtype=np.byte)
-        key = np.frombuffer(key, dtype=np.byte)
+        plaintext = np.frombuffer(plaintext, dtype=np.uint8)
+        key = np.frombuffer(key, dtype=np.uint8)
 
         # enciphering
         for i in range(0, len(plaintext), Cipher.BLOCK_SIZE):
@@ -61,28 +61,22 @@ class Cipher:
             for j in range(Cipher.ROUNDS):
                 # processed_right = self.f(right_block, self.subkeys[j])
                 # processed_left = left_block ^ processed_right
-                subkey = np.frombuffer(self.subkeys[j],dtype=np.byte)
+                subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
                 processed_block = self.f(block,subkey )
-                print("a")
-                print(right_block,len(right_block))
-                print(left_block,len(left_block))
                 processed_left = (
                     np.concatenate((right_block, left_block)) ^ processed_block
                 )
-                print(np.concatenate((right_block, left_block)),len(np.concatenate((right_block, left_block))))
-                print(processed_block,len(processed_block))
-                # swap
-                print("b")
-                print(right_block,len(right_block))
-                print(left_block,len(left_block))
-                print("c")
-                left_block = processed_block[: (Cipher.BLOCK_SIZE // 2)]
-                right_block = processed_block[(Cipher.BLOCK_SIZE // 2) :]
-                # left_block = right_block
-                # right_block = processed_left
+                # left_block = processed_block[: (Cipher.BLOCK_SIZE // 2)]
+                # right_block = processed_block[(Cipher.BLOCK_SIZE // 2) :]
+                left_block = right_block
+                right_block = processed_left[(Cipher.BLOCK_SIZE // 2) :]
             # final permutation
+            print("enc left",left_block)
+            print("enc right",right_block)
             block = np.concatenate([left_block, right_block])
+            print("enc pre final permutation",block)
             block = self.final_permutation(block)
+            print("enc post final permutation",bytes(block))
             # ganti prev_cipher
             prev_cipher = block
             # append
@@ -100,13 +94,13 @@ class Cipher:
                 + int.from_bytes(key[Cipher.KEY_SIZE // 2 :], "big")
             )[2:].encode()
             prev_cipher = np.frombuffer(
-                iv ^ random.getrandbits(len(plaintext), 8), dtype=np.byte
+                iv ^ random.getrandbits(len(plaintext), 8), dtype=np.uint8
             )
         # init plaintext
-        plaintext = np.empty(0, dtype=np.byte)
+        plaintext = np.empty(0, dtype=np.uint8)
         # convert to numpy bytes
-        ciphertext = np.frombuffer(ciphertext, dtype=np.byte)
-        key = np.frombuffer(key, dtype=np.byte)
+        ciphertext = np.frombuffer(ciphertext, dtype=np.uint8)
+        key = np.frombuffer(key, dtype=np.uint8)
         # deciphering
         for i in range(0, len(ciphertext), Cipher.BLOCK_SIZE):
             # init block
@@ -114,23 +108,25 @@ class Cipher:
             # slice
             block = ciphertext[start_index : start_index + Cipher.BLOCK_SIZE]
             # inverse final permutation
+            print("dec post final permutation",bytes(block))
             block = self.inverse_final_permutation(block)
+            print("dec pre final permutation",block)
             # partisi
             left_block = block[: (Cipher.BLOCK_SIZE // 2)]
             right_block = block[(Cipher.BLOCK_SIZE // 2) :]
             for j in range(Cipher.ROUNDS):
                 # processed_left = self.inv_f(left_block, self.subkeys[j])
                 # processed_right = right_block ^ processed_left
-                subkey = np.frombuffer(self.subkeys[j],dtype=np.byte)
+                subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
                 processed_block = self.inv_f(block, subkey)
                 processed_right = (
                     np.concatenate((right_block, left_block)) ^ processed_block
                 )
                 # swap
-                left_block = processed_block[: (Cipher.BLOCK_SIZE // 2)]
-                right_block = processed_block[(Cipher.BLOCK_SIZE // 2) :]
-                # left_block = processed_right
-                # right_block = left_block
+                # left_block = processed_block[: (Cipher.BLOCK_SIZE // 2)]
+                # right_block = processed_block[(Cipher.BLOCK_SIZE // 2) :]
+                left_block = processed_right[: (Cipher.BLOCK_SIZE // 2)]
+                right_block = left_block
             block = np.concatenate([left_block, right_block])
             # initial permutation
             block = self.inverse_initial_permutation(block)
@@ -140,7 +136,7 @@ class Cipher:
             # ganti prev_cipher
             prev_cipher = ciphertext[start_index : start_index + Cipher.BLOCK_SIZE]
             # append
-            plaintext = np.append(ciphertext, block)
+            plaintext = np.append(plaintext, block)
         # remove padding
         # cek apakah ada padding
         padding_count = plaintext[-1]
@@ -152,6 +148,9 @@ class Cipher:
         if have_padding:
             # remove padding
             plaintext = plaintext[:-padding_count]
+        # print(plaintext)
+        # print(plaintext.reshape(len(plaintext)))
+        # print(bytes(plaintext.reshape(len(plaintext))))
         return bytes(plaintext)
 
     def generate_key(self) -> list[bytes]:
@@ -265,10 +264,8 @@ class Cipher:
     def final_permutation(self, ciphertext: np.ndarray) -> bytes:
         # First, convert each element of the plaintext into array of 0's and 1's.
         # Each element of mat will be consisted of an array of 0's and 1's.
-        print(ciphertext)
         mat = [0 for _ in range(len(ciphertext))]
         for i in range(0, len(ciphertext)):
-            # print(bin(ciphertext[i]).replace("-",''))
             mat[i] = np.asarray([int(i) for i in bin(ciphertext[i]).replace("-",'')[2:].zfill(8)], dtype=np.uint8)
         mat = np.array(mat)
         # Shift right rows by n
@@ -289,6 +286,7 @@ class Cipher:
             mat[i] = np.flip(mat[i])
         # Transpose
         mat = mat.transpose()
+        # print("init permut final enc",mat)
         # Flatten matrix
         permutated = np.packbits(mat)
         return permutated.tobytes()
@@ -300,6 +298,7 @@ class Cipher:
         for i in range(0, len(ciphertext)):
             mat[i] = np.asarray([int(i) for i in bin(ciphertext[i]).replace("-",'')[2:].zfill(8)], dtype=np.uint8)
         mat = np.array(mat)
+        # print("init permut final dec",mat)
         # Transpose
         mat = mat.transpose()
         # Flip odd rows, BEWARE! Index starts at 0, not 1!
@@ -340,25 +339,11 @@ class Cipher:
         # pake S-box AES
         # convert 8 bit -> 8 bit
         # initial block
-        block = np.zeros(Cipher.BLOCK_SIZE, dtype=np.byte)
+        block = np.zeros(Cipher.BLOCK_SIZE, dtype=np.uint8)
         S_BOX = [
             [
-                0x63,
-                0x7C,
-                0x77,
-                0x7B,
-                0xF2,
-                0x6B,
-                0x6F,
-                0xC5,
-                0x30,
-                0x01,
-                0x67,
-                0x2B,
-                0xFE,
-                0xD7,
-                0xAB,
-                0x76,
+                0x63,0x7C,0x77,0x7B,0xF2,0x6B,0x6F,0xC5, 
+                0x30,0x01,0x67,0x2B,0xFE,0xD7,0xAB,0x76,
             ],
             [
                 0xCA,
@@ -638,7 +623,7 @@ class Cipher:
         return block
 
     def inverse_substitute(self, B: np.ndarray) -> np.ndarray:
-        block = np.zeros(Cipher.BLOCK_SIZE, dtype=np.byte)
+        block = np.zeros(Cipher.BLOCK_SIZE, dtype=np.uint8)
         INV_S_BOX = [
             [
                 0x52,
@@ -938,16 +923,16 @@ class Cipher:
     def permutate(self, B: np.ndarray) -> np.ndarray:
         #digenerate dengan python random dengan seed 960024
         P_BOX = [12, 8, 4, 0, 9, 14, 15, 10, 1, 6, 3, 13, 2, 11, 5, 7]
-        return np.array([B[P_BOX[i]] for i in range(Cipher.BLOCK_SIZE)],dtype=np.byte)
+        return np.array([B[P_BOX[i]] for i in range(Cipher.BLOCK_SIZE)],dtype=np.uint8)
 
     def inverse_permutate(self, left_block: np.ndarray) -> np.ndarray:
         INVERSE_P_BOX = [3, 8, 12, 10, 2, 14, 9, 15, 1, 4, 7, 13, 0, 11, 5, 6]
-        return np.array([left_block[INVERSE_P_BOX[i]] for i in range(Cipher.BLOCK_SIZE)],dtype=np.byte)
+        return np.array([left_block[INVERSE_P_BOX[i]] for i in range(Cipher.BLOCK_SIZE)],dtype=np.uint8)
 
 
 if __name__ == "__main__":
     c = Cipher(str.encode("abcdefghijklmnop"))
-    # res = c.substitute(np.frombuffer(str.encode("qrstuvwxyz012345"),dtype=np.byte))
+    # res = c.substitute(np.frombuffer(str.encode("qrstuvwxyz012345"),dtype=np.uint8))
     # print(res.tobytes())
     # print(c.inverse_substitute(res))
     # print(c.inverse_substitute(res).tobytes())
@@ -955,9 +940,14 @@ if __name__ == "__main__":
     # tes enkripsi
     #"qrstuAwxyz012345" -> 'L*\x80\xa5q*,6\xc0T&I\x84.@\xe1'
     #"qrstvAwxyz012345" ->b'L"\x04\x85q*,6\xc0T&\t\x84>H\xe3'
-    plaintext = np.frombuffer(str.encode("qrstuAwxyz012355"),dtype=np.byte)
+    plaintext = np.frombuffer(str.encode("qrstuAwxyz012355"),dtype=np.uint8)
+    print("plain",plaintext)
     ciphertext = c.encrypt(plaintext,c.key,'ecb')
     print(f"Ciphertext: {ciphertext}")
     # tes dekripsi
     reverse_plaintext = c.decrypt(ciphertext,c.key,"ecb")
     print(f"PLaintext: {reverse_plaintext}")
+
+    # print(plaintext)
+    # print(c.final_permutation(plaintext))
+    # print(c.inverse_final_permutation(c.final_permutation(plaintext)))

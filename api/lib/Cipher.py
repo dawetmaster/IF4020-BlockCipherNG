@@ -22,9 +22,7 @@ class Cipher:
                 int.from_bytes(key[: Cipher.KEY_SIZE // 2], "big")
                 + int.from_bytes(key[Cipher.KEY_SIZE // 2 :], "big")
             )[2:].encode()
-            prev_cipher = np.frombuffer(
-                iv ^ random.getrandbits(len(plaintext), 8), dtype=np.uint8
-            )
+            prev_cipher = np.frombuffer(iv,dtype=np.uint8) ^ np.frombuffer(random.getrandbits(Cipher.BLOCK_SIZE*8).to_bytes(Cipher.BLOCK_SIZE,'big'), dtype=np.uint8)
         elif mode == "counter":
             # initial counter
             random.seed(int.from_bytes(key, "big"))
@@ -80,7 +78,7 @@ class Cipher:
                 # right_block = processed_left[(Cipher.BLOCK_SIZE // 2) :]
             # final permutation
             # block = np.concatenate([left_block, right_block])
-            block = self.final_permutation(block)
+            block = np.frombuffer(self.final_permutation(block),dtype=np.uint8)
             # ganti prev_cipher
             prev_cipher = block
             # append
@@ -97,9 +95,7 @@ class Cipher:
                 int.from_bytes(key[: Cipher.KEY_SIZE // 2], "big")
                 + int.from_bytes(key[Cipher.KEY_SIZE // 2 :], "big")
             )[2:].encode()
-            prev_cipher = np.frombuffer(
-                iv ^ random.getrandbits(len(plaintext), 8), dtype=np.uint8
-            )
+            prev_cipher = np.frombuffer(iv,dtype=np.uint8) ^ np.frombuffer(random.getrandbits(Cipher.BLOCK_SIZE*8).to_bytes(Cipher.BLOCK_SIZE,'big'), dtype=np.uint8)         
         # init plaintext
         plaintext = np.empty(0, dtype=np.uint8)
         # convert to numpy bytes
@@ -140,7 +136,7 @@ class Cipher:
             if mode == "cbc":
                 block = block ^ prev_cipher
             # ganti prev_cipher
-            prev_cipher = ciphertext[start_index : start_index + Cipher.BLOCK_SIZE]
+            prev_cipher = np.frombuffer(ciphertext[start_index : start_index + Cipher.BLOCK_SIZE],dtype=np.uint8)
             # append
             # print("b",block)
             plaintext = np.append(plaintext, block)
@@ -362,58 +358,16 @@ class Cipher:
                 0x07,0x12,0x80,0xE2,0xEB,0x27,0xB2,0x75,
             ],
             [
-                0x09,
-                0x83,
-                0x2C,
-                0x1A,
-                0x1B,
-                0x6E,
-                0x5A,
-                0xA0,
-                0x52,
-                0x3B,
-                0xD6,
-                0xB3,
-                0x29,
-                0xE3,
-                0x2F,
-                0x84,
+                0x09,0x83,0x2C,0x1A,0x1B,0x6E,0x5A,0xA0, 
+                0x52,0x3B,0xD6,0xB3,0x29,0xE3,0x2F,0x84,
             ],
             [
-                0x53,
-                0xD1,
-                0x00,
-                0xED,
-                0x20,
-                0xFC,
-                0xB1,
-                0x5B,
-                0x6A,
-                0xCB,
-                0xBE,
-                0x39,
-                0x4A,
-                0x4C,
-                0x58,
-                0xCF,
+                0x53,0xD1,0x00,0xED,0x20,0xFC,0xB1,0x5B, 
+                0x6A,0xCB,0xBE,0x39,0x4A,0x4C,0x58,0xCF,
             ],
             [
-                0xD0,
-                0xEF,
-                0xAA,
-                0xFB,
-                0x43,
-                0x4D,
-                0x33,
-                0x85,
-                0x45,
-                0xF9,
-                0x02,
-                0x7F,
-                0x50,
-                0x3C,
-                0x9F,
-                0xA8,
+                0xD0,0xEF,0xAA,0xFB,0x43,0x4D,0x33,0x85, 
+                0x45,0xF9,0x02,0x7F,0x50,0x3C,0x9F,0xA8,
             ],
             [
                 0x51,
@@ -900,16 +854,18 @@ if __name__ == "__main__":
     #"qrstuAwxyz012345" -> 'L*\x80\xa5q*,6\xc0T&I\x84.@\xe1'
     #"qrstvAwxyz012345" ->b'L"\x04\x85q*,6\xc0T&\t\x84>H\xe3'
     # plaintext = np.frombuffer(str.encode("halohalobandung ibukota pariaman. Sudah laman214uiweofewoiferhi"),dtype=np.uint8)
-    plaintext = str.encode("hamohalobandung ibukota pariaman. Sudah laman214uiweofewoiferhi")
+    plaintext = str.encode("iamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7'")
     print("plain",bytes(plaintext))
-    ciphertext = c.encrypt(plaintext,c.key,'ecb')
-    print(f"Ciphertext: {ciphertext}")
+    # ciphertext = c.encrypt(plaintext,c.key,'ecb')
+    # print(f"Ciphertext ECB: {ciphertext}")
+    ciphertext = c.encrypt(plaintext,c.key,'cbc')
+    print(f"Ciphertext CBC: {ciphertext}")
     # tes dekripsi
-    reverse_plaintext = c.decrypt(ciphertext,c.key,"ecb")
+    reverse_plaintext = c.decrypt(ciphertext,c.key,"cbc")
     print(f"PLaintext: {reverse_plaintext}")
 
-    print("PLAINTEKS:",bytes(plaintext))
-    print("REVERSED_PLAINTEKS",c.decrypt(c.encrypt(plaintext,c.key,'ecb'),c.key,'ecb'))
+    # print("PLAINTEKS:",bytes(plaintext))
+    # print("REVERSED_PLAINTEKS",c.decrypt(c.encrypt(plaintext,c.key,'ecb'),c.key,'ecb'))
     #'R\t\xf8\x03\x1b\x98\xdca_\r\xfa\xda\xfe8\x84\xfd'
     #'R\t\xf8\x03\x1b\x98\xdca[\r\xda\xda~8\x84\xfd'
 
@@ -929,4 +885,40 @@ Ciphertext: b':`j\xfcz\x1cc\xb6\xe4\xfc^\xf9\xcb\xf1\xc33\xf5\xd6\xe9\xce{V\x1c\
 """
 plain b'halohalobandung ibukota pbriaman. Sudah laman214uiweofewoiferhi'
 Ciphertext: b'S"1:\xb8+,\xed\xf7\x8c\xb3\x17`A\xa5\xb1\xed\x0c@\x1f6\xe5\xf73Q\x93\x82\xe7B\'\x9b\x16j\x92~\xd6\x94\xcf\xcd!\x84\xe0hO\xc3\x15\xece\x1f%4\t\xccF\xef\xbe\xb6\xce^\x14 \x96\x929'
+"""
+
+"""
+Ciphertext ECB: b':`j\xfcz\x1cc\xb6\xe4\xfc^\xf9\xcb\xf1\xc33\xf5\xd6\xe9\xce{V\x1c\x1e\xcc\x80\x1b\xf5\x8e\xac\xcb\xa7j\x92~\xd6\x94\xcf\xcd!\x84\xe0hO\xc3\x15\xece\x1f%4\t\xccF\xef\xbe\xb6\xce^\x14 \x96\x929'
+
+Ciphertext CBC: b'v\x89}\x1b+\xa1\x1c7\x92]\xe3 f\xeb\x04.\xf0`#=e\xa7\x8fd*\x02pC\xf8\xb3\x93\xa4\x1c{\xa4@y\xcbT\xadmC\xd5\xfe\x07^\t3\x80\xbf\xcf\x11y,\xc8\xc6vK\xfc\xf7\x95\x0e+\xda'
+"""
+
+"""
+Ciphertext ECB: b':`j\xfcz\x1cc\xb6\xe4\xfc^\xf9\xcb\xf1\xc33\x00 D1\\V\xdfQt\xd8a\xf0{\xd0B\x1fj\x92~\xd6\x94\xcf\xcd!\x84\xe0hO\xc3\x15\xece\x1f%4\t\xccF\xef\xbe\xb6\xce^\x14 \x96\x929'
+Ciphertext CBC: b'v\x89}\x1b+\xa1\x1c7\x92]\xe3 f\xeb\x04.\x89.\x10\xaa"\xc2\x0fg/\xa0\x00\x9f\x0bi\xf8%\xc4;\xa0H\x90\x15M\xdd+\xa6\x08o!\xb3*h\xb6qSIw\xa8\x03\xb9~N&#\xca\x8fv\x9c'
+"""
+
+"""
+plain b'hamohalobandung ibvkota pariaman. Sudah laman214uiweofewoiferhi'
+Ciphertext CBC: b'v\x89}\x1b+\xa1\x1c7\x92]\xe3 f\xeb\x04.\x89.\x10\xaa"\xc2\x0fg/\xa0\x00\x9f\x0bi\xf8%\xc4;\xa0H\x90\x15M\xdd+\xa6\x08o!\xb3*h\xb6qSIw\xa8\x03\xb9~N&#\xca\x8fv\x9c'
+"""
+"""
+plain b'iamohalobandung ibvkota pariaman. Sudah laman214uiweofewoiferhi'
+Ciphertext CBC: b'y3t7\xbdM\xc5cpc\xab\x80\x90$\xf1j\xff\x1e\xdd\x15\xcf\xa3\xd0\x8f\xcbG\x82E\x14\xc2\x18\xb9[\x98\xcafFL}\xf0\x9c\x8c\xb2\xf9\x1bW\xf9(\xfd\xcc\xe4\xfa\x82\xf9-\x1a\xfbk\xa8P%\xe0\xe2\xcf'
+"""
+"""
+plain b'iamojalobandung ibvkota pariaman. Sudah laman214uiweofewoiferhi'
+Ciphertext CBC: b'OB\x90\x0b\xb4\xa9\xfeSjCN~J\xae\xa5\x9f\x0bk\x7f\xa6\xe5;\x89u\n\xc0\xe6\x0b\x9c\xce\x08\x90J\x0b\x8a\xdc\xe3+\x0e\xd0)\xef\r\x9e_\xb5L)\x80\x92\xe4\x99S)\xb5.l6\xee\x93\xd5\xf9\x9e>'
+"""
+"""
+plain b'iamojalobandung ibvkota par0aman. Sudah laman214uiweofewoiferhi'
+Ciphertext CBC: b'OB\x90\x0b\xb4\xa9\xfeSjCN~J\xae\xa5\x9fs@\x1c\xab\xfd\x83\xec}\xd3\xf0+\x8f\xfa\xe4\xea\x9a\x85\xb5\xa6u\xd8\xf8\x95 \xfc\x03N\xba\x18\x18\x0f\xb0\xff\xcb\xe4\xc5\x15>\xfcp>\x82\xb4\x8a\x159\xff0'
+"""
+"""
+plain b'iamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7i'
+Ciphertext CBC: b'OB\x90\x0b\xb4\xa9\xfeSjCN~J\xae\xa5\x9fs@\x1c\xab\xfd\x83\xec}\xd3\xf0+\x8f\xfa\xe4\xea\x9a\x85\xb5\xa6u\xd8\xf8\x95 \xfc\x03N\xba\x18\x18\x0f\xb0[w\xdf\xe7\xc9:P|z\x1as\xe9\x02\xd1\xb2\xed'
+"""
+"""
+plain b"iamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7'"
+Ciphertext CBC: b'OB\x90\x0b\xb4\xa9\xfeSjCN~J\xae\xa5\x9fs@\x1c\xab\xfd\x83\xec}\xd3\xf0+\x8f\xfa\xe4\xea\x9a\x85\xb5\xa6u\xd8\xf8\x95 \xfc\x03N\xba\x18\x18\x0f\xb0!\xb5t;l\xc9\x80\x82\x8dAT\xecQ_\xe4\x86'
 """

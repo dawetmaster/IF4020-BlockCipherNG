@@ -8,7 +8,13 @@ const error_msg: Ref<string> = ref('');
 async function handleEncryptionSubmission(formData: FormData) {
   // Handle form submission logic here
   console.log('Form data:', formData);
-  await axios.postForm(import.meta.env.VITE_BE_BASE_URL + '/encrypt', formData)
+  await axios.postForm(
+    import.meta.env.VITE_BE_BASE_URL + '/encrypt',
+    formData,
+    {
+      headers: {'Content-Type': 'multipart/form-data'}
+    }
+  )
     .then((res) => {
       console.log(res.data)
       output.value = res.data;

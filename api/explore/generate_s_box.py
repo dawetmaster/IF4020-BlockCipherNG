@@ -28,3 +28,5 @@ processed_data = process_six_bits(byte_stream)
 
 # Print the processed data
 print(processed_data)
+
+#DEPRECATED, gak jadi dipakai

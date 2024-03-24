@@ -40,7 +40,6 @@ class Cipher:
 
         # convert to numpy bytes
         plaintext = np.frombuffer(plaintext, dtype=np.uint8)
-        # print(plaintext)
         key = np.frombuffer(key, dtype=np.uint8)
 
         # enciphering
@@ -49,35 +48,20 @@ class Cipher:
             start_index = i * Cipher.BLOCK_SIZE
             # slice
             block = plaintext[start_index : start_index + Cipher.BLOCK_SIZE]
-            # print(block)
             # XOR kan dengan ciphertext sebelumnya bila mode CBC
             if mode == "cbc":
                 block = block ^ prev_cipher
             # initial permutation
             block = self.initial_permutation(block)
             # partisi
-            left_block = block[: (Cipher.BLOCK_SIZE // 2)]
-            right_block = block[(Cipher.BLOCK_SIZE // 2) :]
             for j in range(Cipher.ROUNDS):
-                # processed_right = self.f(right_block, self.subkeys[j])
-                # processed_left = left_block ^ processed_right
+                # get subkey
+                subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
                 # bit permutation
                 block = self.initial_permutation(block)
-                #xor plainteks dengan key
-                subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
+                #f function
                 block = self.f(block,subkey )
-                # block = processed_block ^ (np.concatenate(right_block,left_block))
-                left_block = block[: (Cipher.BLOCK_SIZE // 2)]
-                right_block = block[(Cipher.BLOCK_SIZE // 2) :]
-                # processed_left = (
-                #     np.concatenate((right_block, left_block)) ^ processed_block
-                # )
-                # left_block = processed_block[: (Cipher.BLOCK_SIZE // 2)]
-                # right_block = processed_block[(Cipher.BLOCK_SIZE // 2) :]
-                # left_block = right_block
-                # right_block = processed_left[(Cipher.BLOCK_SIZE // 2) :]
             # final permutation
-            # block = np.concatenate([left_block, right_block])
             block = np.frombuffer(self.final_permutation(block),dtype=np.uint8)
             # ganti prev_cipher
             prev_cipher = block
@@ -109,27 +93,10 @@ class Cipher:
             block = ciphertext[start_index : start_index + Cipher.BLOCK_SIZE]
             # inverse final permutation
             block = self.inverse_final_permutation(block)
-            # partisi
-            left_block = block[: (Cipher.BLOCK_SIZE // 2)]
-            right_block = block[(Cipher.BLOCK_SIZE // 2) :]
-            processed_right = right_block
             for j in range(Cipher.ROUNDS-1,-1,-1):
                 subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
-                # swap
-                # left_block = processed_block[: (Cipher.BLOCK_SIZE // 2)]
-                # right_block = processed_block[(Cipher.BLOCK_SIZE // 2) :]
-                # left_block = processed_right
-                # right_block = left_block
-                # processed_left = self.inv_f(left_block, self.subkeys[j])
-                # processed_right = right_block ^ processed_left
-                processed_block = self.inv_f(block, subkey)
-                block = processed_block
-                # block = self.inverse_final_permutation(block)
+                block = self.inv_f(block, subkey)
                 block = self.inverse_initial_permutation(block)
-                # processed_right = (
-                #     np.concatenate((right_block, left_block)) ^ processed_block
-                # )
-            # block = np.concatenate([left_block, right_block])
             # initial permutation
             block = self.inverse_initial_permutation(block)
             # XOR kan dengan ciphertext sebelumnya bila mode CBC
@@ -138,7 +105,6 @@ class Cipher:
             # ganti prev_cipher
             prev_cipher = np.frombuffer(ciphertext[start_index : start_index + Cipher.BLOCK_SIZE],dtype=np.uint8)
             # append
-            # print("b",block)
             plaintext = np.append(plaintext, block)
         # remove padding
         # cek apakah ada padding
@@ -190,7 +156,6 @@ class Cipher:
     def initial_permutation(self, plaintext: np.ndarray) -> np.ndarray:
         # First, convert each element of the plaintext into array of 0's and 1's.
         # Each element of mat will be consisted of an array of 0's and 1's.
-        # print("plain enc",plaintext)
         mat = [0 for _ in range(len(plaintext))]
         for i in range(0, len(plaintext)):
             mat[i] = np.asarray([int(i) for i in bin(plaintext[i])[2:].zfill(8)], dtype=np.uint8)
@@ -223,7 +188,6 @@ class Cipher:
             mat[i] = np.concatenate([mat[i][-shift:], mat[i][:-shift]])
         # Convert each mat element to uint8
         permutated = np.packbits(mat)
-        # print("perm enc",permutated)
         return permutated
 
     def inverse_initial_permutation(self, plaintext: np.ndarray) -> np.ndarray:
@@ -827,8 +791,12 @@ if __name__ == "__main__":
     print("plain",bytes(plaintext))
     ciphertext = c.encrypt(plaintext,c.key,'ecb')
     print(f"Ciphertext ECB: {ciphertext}")
+    # tes dekripsi
+    reverse_plaintext = c.decrypt(ciphertext,c.key,"ebc")
+    print(f"PLaintext EBC: {reverse_plaintext}")
+    # cbc
     ciphertext = c.encrypt(plaintext,c.key,'cbc')
     print(f"Ciphertext CBC: {ciphertext}")
     # tes dekripsi
     reverse_plaintext = c.decrypt(ciphertext,c.key,"cbc")
-    print(f"PLaintext: {reverse_plaintext}")
+    print(f"PLaintext CBC: {reverse_plaintext}")

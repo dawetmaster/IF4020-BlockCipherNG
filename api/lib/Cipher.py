@@ -350,8 +350,6 @@ class Cipher:
             for j in range(Cipher.ROUNDS):
                 # get subkey
                 subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
-                # bit permutation
-                block = self.bit_permutation(block)
                 #f function
                 block = self.f(block,subkey )
             # final permutation
@@ -389,7 +387,6 @@ class Cipher:
             for j in range(Cipher.ROUNDS-1,-1,-1):
                 subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
                 block = self.inv_f(block, subkey)
-                block = self.inverse_bit_permutation(block)
             # initial permutation
             block = self.inverse_initial_permutation(block)
             # XOR kan dengan ciphertext sebelumnya bila mode CBC
@@ -579,17 +576,24 @@ class Cipher:
         return unpermutated
 
     def f(self, block: np.ndarray, internal_key: np.ndarray) -> np.ndarray:
-        # expanded_block = self.block_expansion(right_block)
-        # A = expanded_block ^ internal_key
+        # bit permutation
+        block = self.bit_permutation(block)
+        # XOR block dengan key
         A = block ^ internal_key
+        # substitusi
         B = self.substitute(A)
+        # byte permutation
         return self.permutate(B)
 
     def inv_f(self, left_block: np.ndarray, internal_key: np.ndarray) -> np.ndarray:
+        # inverse byte permutation
         B = self.inverse_permutate(left_block)
+        # inverse substitusi
         A = self.inverse_substitute(B)
+        # XOR dengan key
         original_block = A ^ internal_key
-        # return self.block_reduction(original_block)
+        # inverse bit permutation
+        original_block = self.inverse_bit_permutation(original_block)
         return original_block
 
     def substitute(self, A: np.ndarray) -> np.ndarray:
@@ -639,22 +643,8 @@ class Cipher:
                 0x46,0xEE,0xB8,0x14,0xDE,0x5E,0x0B,0xDB,
             ],
             [
-                0xE0,
-                0x32,
-                0x3A,
-                0x0A,
-                0x49,
-                0x06,
-                0x24,
-                0x5C,
-                0xC2,
-                0xD3,
-                0xAC,
-                0x62,
-                0x91,
-                0x95,
-                0xE4,
-                0x79,
+                0xE0,0x32,0x3A,0x0A,0x49,0x06,0x24,0x5C, 
+                0xC2,0xD3,0xAC,0x62,0x91,0x95,0xE4,0x79,
             ],
             [
                 0xE7,
@@ -769,22 +759,8 @@ class Cipher:
                 0xEE,0x4C,0x95,0x0B,0x42,0xFA,0xC3,0x4E,
             ],
             [
-                0x08,
-                0x2E,
-                0xA1,
-                0x66,
-                0x28,
-                0xD9,
-                0x24,
-                0xB2,
-                0x76,
-                0x5B,
-                0xA2,
-                0x49,
-                0x6D,
-                0x8B,
-                0xD1,
-                0x25,
+                0x08,0x2E,0xA1,0x66,0x28,0xD9,0x24,0xB2, 
+                0x76,0x5B,0xA2,0x49,0x6D,0x8B,0xD1,0x25,
             ],
             [
                 0x72,

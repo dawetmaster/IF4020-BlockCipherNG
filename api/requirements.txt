@@ -1,4 +1,5 @@
 numpy
 flask
 uuid
-base64
+dotenv
+base64; python_version < '3.10'

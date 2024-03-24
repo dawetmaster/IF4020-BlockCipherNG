@@ -11,7 +11,11 @@ Nama *Ngawi* ini kami pilih berdasarkan sebuah kabupaten di Jawa Timur yang sela
 ## Prinsip Utama
 Berikut ini prinsip utama dari NGAWICrypt:
 
-1. (Isi sendiri)
+1. Prinsip Confusion dan Diffusion Shanon
+2. Dapat melakukan enkripsi dan dekripsi dengan 5 mode, yakni **ECB**,**CBC**,**CFB**,**OFB**, dan **CTR**.
+3. Ruang kunci sebanyak 128-bit.
+4. Efek longsoran yang signifikan.
+5. Waktu eksekusi yang bagus.
 
 ## Kebutuhan
 Berikut ini kebutuhan dalam *development* NGAWICrypt:
@@ -22,6 +26,31 @@ Berikut ini kebutuhan dalam *development* NGAWICrypt:
 - `python`
 
 ## Cara menjalankan
+Untuk menjalankan _frontend_, berikut langkahnya:
+1. tambahkan _file_ `.env` pada _folder_ `webapp`. Untuk informasi apa saja yang perlu ada di _file_ `.env`, bisa melihat isi _file_ `.env.example`.
+2. Pindah ke _folder_ `webapp` lalu unduh _dependency_ yang dibutuhkan:
+```sh
+cd webapp
+pnpm install
+```
+3. Jalankan perintah berikut:
+```sh
+pnpm run dev
+```
+4. Masuk ke tautan yang muncul di _command line_. Secara _default_ berada pada _port_ 5173.
+http://localhost:5173/
+
+Untuk menjalankan _backend_, berikut langkahnya:
+1. tambahkan _file_ `.env` pada _folder_ `api`. Untuk informasi apa saja yang perlu ada di _file_ `.env`, bisa melihat isi _file_ `.env.example`.
+2. Pindah ke _folder_ `api` lalu unduh _dependency_ yang dibutuhkan:
+```sh
+cd api
+pip install -r requirements.txt
+```
+3. Jalankan perintah berikut:
+```sh
+python main.py
+```
 
 ## Tentang Kami
 

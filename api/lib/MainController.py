@@ -29,7 +29,7 @@ def register_controllers(app: Flask):
             original_filename = file.filename
         else:
             # jika base 64, decode dulu (idk ini string atau boolean)
-            if(request.form["base64check"]):
+            if(request.form["base64check"]=="true"):
                 plaintext = base64.b64decode(str.encode(request.form["inputtext"]))
             else:
                 # plaintext murni
@@ -77,7 +77,7 @@ def register_controllers(app: Flask):
           original_filename = file.filename
       else:
             # jika base 64, decode dulu (idk ini string atau boolean)
-            if(request.form["base64check"]):
+            if(request.form["base64check"]=="true"):
                 ciphertext = base64.b64decode(str.encode(request.form["inputtext"]))
             else:
                 # plaintext murni

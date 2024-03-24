@@ -1365,16 +1365,16 @@ class Cipher:
 
 
 if __name__ == "__main__":
-    c = Cipher(str.encode("abcdefghijklmnop"), "ofb")
+    c = Cipher(str.encode("abcdefghijklmnop"), "ecb")
     # res = c.substitute(np.frombuffer(str.encode("qrstuvwxyz012345"),dtype=np.uint8))
 
     # tes enkripsi
     plaintext = str.encode(
-        "hamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7\\"
+        "hamojalpband"
     )
-    print("plain", bytes(plaintext))
+    print("Plainteks: ", bytes(plaintext))
     ciphertext = c.encrypt(plaintext)
-    print(f"Ciphertext OFB: {ciphertext}")
+    print(f"Ciphertext ECB: {ciphertext}")
     # tes dekripsi
     c = Cipher(str.encode("abcdefghijklmnop"), "ofb")
     reverse_plaintext = c.decrypt(ciphertext)

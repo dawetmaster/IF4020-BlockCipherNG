@@ -451,59 +451,6 @@ class Cipher:
         elif(self.mode=="ctr"):
             return self.encrypt_in_counter(plaintext)
         return bytes()
-        prev_cipher = None
-
-        if mode in ["cbc", "cfb", "ofb"]:
-            # set up IV
-            random.seed(int.from_bytes(key, "big"))
-            iv = hex(
-                int.from_bytes(key[: Cipher.KEY_SIZE // 2], "big")
-                + int.from_bytes(key[Cipher.KEY_SIZE // 2 :], "big")
-            )[2:].encode()
-            prev_cipher = np.frombuffer(iv,dtype=np.uint8) ^ np.frombuffer(random.getrandbits(Cipher.BLOCK_SIZE*8).to_bytes(Cipher.BLOCK_SIZE,'big'), dtype=np.uint8)
-        elif mode == "counter":
-            # initial counter
-            random.seed(int.from_bytes(key, "big"))
-            counter = random.getrandbits(len(plaintext) * 8)
-
-        # init ciphertext
-        ciphertext = np.empty(0, dtype=np.uint8)
-
-        # padding
-        remainder = len(plaintext) % Cipher.BLOCK_SIZE
-        if remainder != 0:
-            # tambahkan padding agar kelipatan BLOCK_SIZE
-            pad_size = Cipher.BLOCK_SIZE - remainder
-            plaintext = plaintext[:] +  bytes(pad_size * [pad_size])
-
-        # convert to numpy bytes
-        plaintext = np.frombuffer(plaintext, dtype=np.uint8)
-        key = np.frombuffer(key, dtype=np.uint8)
-
-        # enciphering
-        for i in range(len(plaintext)//Cipher.BLOCK_SIZE):
-            # init block
-            start_index = i * Cipher.BLOCK_SIZE
-            # slice
-            block = plaintext[start_index : start_index + Cipher.BLOCK_SIZE]
-            # XOR kan dengan ciphertext sebelumnya bila mode CBC
-            if mode == "cbc":
-                block = block ^ prev_cipher
-            # initial permutation
-            block = self.initial_permutation(block)
-            # partisi
-            for j in range(Cipher.ROUNDS):
-                # get subkey
-                subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
-                #f function
-                block = self.f(block,subkey )
-            # final permutation
-            block = np.frombuffer(self.final_permutation(block),dtype=np.uint8)
-            # ganti prev_cipher
-            prev_cipher = block
-            # append
-            ciphertext = np.append(ciphertext, block)
-        return bytes(ciphertext)
 
     def decrypt(self, ciphertext: bytes) -> bytes:
         if(self.mode=="ebc"):
@@ -517,53 +464,6 @@ class Cipher:
         elif(self.mode=="ctr"):
             return self.decrypt_in_counter(ciphertext)
         return bytes()
-        # set up IV
-        prev_cipher = None
-        if mode in ["cbc", "cfb", "ofb"]:
-            # set up IV
-            random.seed(int.from_bytes(key, "big"))
-            iv = hex(
-                int.from_bytes(key[: Cipher.KEY_SIZE // 2], "big")
-                + int.from_bytes(key[Cipher.KEY_SIZE // 2 :], "big")
-            )[2:].encode()
-            prev_cipher = np.frombuffer(iv,dtype=np.uint8) ^ np.frombuffer(random.getrandbits(Cipher.BLOCK_SIZE*8).to_bytes(Cipher.BLOCK_SIZE,'big'), dtype=np.uint8)         
-        # init plaintext
-        plaintext = np.empty(0, dtype=np.uint8)
-        # convert to numpy bytes
-        ciphertext = np.frombuffer(ciphertext, dtype=np.uint8)
-        key = np.frombuffer(key, dtype=np.uint8)
-        # deciphering
-        for i in range(len(ciphertext)//Cipher.BLOCK_SIZE):
-            # init block
-            start_index = i * Cipher.BLOCK_SIZE
-            # slice
-            block = ciphertext[start_index : start_index + Cipher.BLOCK_SIZE]
-            # inverse final permutation
-            block = self.inverse_final_permutation(block)
-            for j in range(Cipher.ROUNDS-1,-1,-1):
-                subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
-                block = self.inv_f(block, subkey)
-            # initial permutation
-            block = self.inverse_initial_permutation(block)
-            # XOR kan dengan ciphertext sebelumnya bila mode CBC
-            if mode == "cbc":
-                block = block ^ prev_cipher
-            # ganti prev_cipher
-            prev_cipher = np.frombuffer(ciphertext[start_index : start_index + Cipher.BLOCK_SIZE],dtype=np.uint8)
-            # append
-            plaintext = np.append(plaintext, block)
-        # remove padding
-        # cek apakah ada padding
-        padding_count = plaintext[-1]
-        have_padding = True
-        for k in range(len(plaintext) - 1, len(plaintext) - padding_count - 1, -1):
-            if plaintext[k] != padding_count:
-                have_padding = False
-                break
-        if have_padding:
-            # remove padding
-            plaintext = plaintext[:len(plaintext)-padding_count]
-        return bytes(plaintext)
 
     def generate_key(self) -> list[bytes]:
         subkeys = []
@@ -873,58 +773,16 @@ class Cipher:
                 0xE2,0xF9,0x37,0xE8,0x1C,0x75,0xDF,0x6E,
             ],
             [
-                0x47,
-                0xF1,
-                0x1A,
-                0x71,
-                0x1D,
-                0x29,
-                0xC5,
-                0x89,
-                0x6F,
-                0xB7,
-                0x62,
-                0x0E,
-                0xAA,
-                0x18,
-                0xBE,
-                0x1B,
+                0x47,0xF1,0x1A,0x71,0x1D,0x29,0xC5,0x89, 
+                0x6F,0xB7,0x62,0x0E,0xAA,0x18,0xBE,0x1B,
             ],
             [
-                0xFC,
-                0x56,
-                0x3E,
-                0x4B,
-                0xC6,
-                0xD2,
-                0x79,
-                0x20,
-                0x9A,
-                0xDB,
-                0xC0,
-                0xFE,
-                0x78,
-                0xCD,
-                0x5A,
-                0xF4,
+                0xFC,0x56,0x3E,0x4B,0xC6,0xD2,0x79,0x20, 
+                0x9A,0xDB,0xC0,0xFE,0x78,0xCD,0x5A,0xF4,
             ],
             [
-                0x1F,
-                0xDD,
-                0xA8,
-                0x33,
-                0x88,
-                0x07,
-                0xC7,
-                0x31,
-                0xB1,
-                0x12,
-                0x10,
-                0x59,
-                0x27,
-                0x80,
-                0xEC,
-                0x5F,
+                0x1F,0xDD,0xA8,0x33,0x88,0x07,0xC7,0x31, 
+                0xB1,0x12,0x10,0x59,0x27,0x80,0xEC,0x5F,
             ],
             [
                 0x60,
@@ -1032,6 +890,7 @@ class Cipher:
         # Convert each mat element to uint8
         permutated = np.packbits(mat)
         return permutated
+    
     def inverse_bit_permutation(self, plaintext: np.ndarray) -> np.ndarray:
         # First, convert each element of the plaintext into array of 0's and 1's.
         # Each element of mat will be consisted of an array of 0's and 1's.

@@ -8,13 +8,306 @@ class Cipher:
     KEY_SIZE = 16  # bytes
     ROUNDS = 16
 
-    def __init__(self, key: bytes) -> None:
+    def __init__(self, key: bytes, mode:str) -> None:
         self.key = key
         self.subkeys = self.generate_key()
+        self.mode = mode
+
+        self.iv = None
+        self.counter = None
+
+        if mode in ["cbc", "cfb", "ofb"]:
+            self.iv = self.create_iv()
+        elif mode == "ctr":
+            self.counter = self.create_counter()
+
+    def create_iv(self) -> bytes:
+        random.seed(int.from_bytes(self.key, "big"))
+        iv = hex(
+            int.from_bytes(self.key[: Cipher.KEY_SIZE // 2], "big")
+            + int.from_bytes(self.key[Cipher.KEY_SIZE // 2 :], "big")
+        )[2:].encode()
+        return iv
+    
+    def create_counter(self) -> int:
+        random.seed(int.from_bytes(self.key, "big"))
+        return random.getrandbits(Cipher.BLOCK_SIZE * 8)
+    
+    def encrypt_in_ebc(self, plaintext: bytes) -> bytes:
+        # one round in ebc
+
+        # init ciphertext
+        ciphertext = np.empty(0, dtype=np.uint8)
+
+        # padding
+        remainder = len(self.plaintext) % Cipher.BLOCK_SIZE
+        if remainder != 0:
+            # tambahkan padding agar kelipatan BLOCK_SIZE
+            pad_size = Cipher.BLOCK_SIZE - remainder
+            plaintext = plaintext[:] +  bytes(pad_size * [pad_size])
+
+        # convert to numpy bytes
+        plaintext = np.frombuffer(plaintext, dtype=np.uint8)
+        key = np.frombuffer(self.key, dtype=np.uint8)
+
+        # enciphering
+        for i in range(len(plaintext)//Cipher.BLOCK_SIZE):
+            start_idx = i * Cipher.BLOCK_SIZE
+            block = plaintext[start_idx : start_idx + Cipher.BLOCK_SIZE]
+            ciphertext = np.append(ciphertext, self.f(block, key))
+        return bytes(ciphertext)
+    
+    def decrypt_in_ebc(self, ciphertext: bytes) -> bytes:
+        # one round in ebc
+
+        # ini plaintext
+        plaintext = np.empty(0, dtype=np.uint8)
+
+        # convert to numpy bytes
+        ciphertext = np.frombuffer(ciphertext, dtype=np.uint8)
+        key = np.frombuffer(self.key, dtype=np.uint8)
+
+        # deciphering
+        for i in range(len(ciphertext)//Cipher.BLOCK_SIZE):
+            start_idx = i * Cipher.BLOCK_SIZE
+            block = ciphertext[start_idx : start_idx + Cipher.BLOCK_SIZE]
+            plaintext = np.append(plaintext, self.inv_f(block, key))
+        return bytes(plaintext)
+    
+    def encrypt_in_cbc(self, plaintext: bytes) -> bytes:
+        # one round in cbc
+
+        # init ciphertext
+        ciphertext = np.empty(0, dtype=np.uint8)
+
+        # padding
+        remainder = len(self.plaintext) % Cipher.BLOCK_SIZE
+        if remainder != 0:
+            # tambahkan padding agar kelipatan BLOCK_SIZE
+            pad_size = Cipher.BLOCK_SIZE - remainder
+            plaintext = plaintext[:] +  bytes(pad_size * [pad_size])
+
+        # convert to numpy bytes
+        plaintext = np.frombuffer(plaintext, dtype=np.uint8)
+        key = np.frombuffer(self.key, dtype=np.uint8)
+
+        # enciphering
+        for i in range(len(plaintext)//Cipher.BLOCK_SIZE):
+            start_idx = i * Cipher.BLOCK_SIZE
+            block = plaintext[start_idx : start_idx + Cipher.BLOCK_SIZE]
+            block = block ^ self.iv
+            ciphertext = np.append(ciphertext, self.f(block, key))
+            self.iv = ciphertext[start_idx : start_idx + Cipher.BLOCK_SIZE]
+        return bytes(ciphertext)
+    
+    def decrypt_in_cbc(self, ciphertext: bytes) -> bytes:
+        # one round in cbc
+
+        # init plaintext
+        plaintext = np.empty(0, dtype=np.uint8)
+
+        # convert to numpy bytes
+        ciphertext = np.frombuffer(ciphertext, dtype=np.uint8)
+        key = np.frombuffer(self.key, dtype=np.uint8)
+
+        # deciphering
+        for i in range(len(ciphertext)//Cipher.BLOCK_SIZE):
+            start_idx = i * Cipher.BLOCK_SIZE
+            block = ciphertext[start_idx : start_idx + Cipher.BLOCK_SIZE]
+            plaintext = np.append(plaintext, self.inv_f(block, key) ^ self.iv)
+            self.iv = block
+        return bytes(plaintext)
+    
+    def encrypt_in_cfb(self, plaintext: bytes) -> bytes:
+        # one round in cfb
+
+        # init ciphertext and r
+        ciphertext = np.empty(0, dtype=np.uint8)
+        r = 2 # bytes
+
+        # padding
+        remainder = len(self.plaintext) % Cipher.BLOCK_SIZE
+        if remainder != 0:
+            # tambahkan padding agar kelipatan BLOCK_SIZE
+            pad_size = Cipher.BLOCK_SIZE - remainder
+            plaintext = plaintext[:] +  bytes(pad_size * [pad_size])
+
+        # convert to numpy bytes
+        plaintext = np.frombuffer(plaintext, dtype=np.uint8)
+        key = np.frombuffer(self.key, dtype=np.uint8)
+
+        # enciphering
+        for i in range(len(plaintext)//r):
+            start_idx = i * r
+            block = plaintext[start_idx : start_idx + r]
+
+            # encrypt iv
+            shift_register = self.f(self.iv, key)
+
+            # select msb from iv (r bytes)
+            msb = shift_register[:r]
+
+            # xor with plaintext
+            cipher_n = block ^ msb
+            ciphertext = np.append(ciphertext, cipher_n)
+
+            self.iv = np.concatenate([self.iv[r:], cipher_n])
+        return bytes(ciphertext)
+    
+    def decrypt_in_cfb(self, ciphertext: bytes) -> bytes:
+        # one round in cfb
+
+        # init plaintext and r
+        plaintext = np.empty(0, dtype=np.uint8)
+        r = 2
+
+        # convert to numpy bytes
+        ciphertext = np.frombuffer(ciphertext, dtype=np.uint8)
+        key = np.frombuffer(self.key, dtype=np.uint8)
+
+        # deciphering
+        for i in range(len(ciphertext)//r):
+            start_idx = i * r
+            block = ciphertext[start_idx : start_idx + r]
+
+            # encrypt iv
+            shift_register = self.f(self.iv, key)
+
+            # select msb from iv (r bytes)
+            msb = shift_register[:r]
+
+            # xor with block
+            plain_n = block ^ msb
+            plaintext = np.append(plaintext, plain_n)
+
+            self.iv = np.concatenate([self.iv[r:], block])        
+        return bytes(plaintext)
+
+    def encrypt_in_ofb(self, plaintext: bytes) -> bytes:
+        # one round in ofb
+
+        # init ciphertext and r
+        ciphertext = np.empty(0, dtype=np.uint8)
+        r = 2 # bytes
+
+        # padding
+        remainder = len(self.plaintext) % Cipher.BLOCK_SIZE
+        if remainder != 0:
+            # tambahkan padding agar kelipatan BLOCK_SIZE
+            pad_size = Cipher.BLOCK_SIZE - remainder
+            plaintext = plaintext[:] +  bytes(pad_size * [pad_size])
+
+        # convert to numpy bytes
+        plaintext = np.frombuffer(plaintext, dtype=np.uint8)
+        key = np.frombuffer(self.key, dtype=np.uint8)
+
+        # enciphering
+        for i in range(len(plaintext)//r):
+            start_idx = i * r
+            block = plaintext[start_idx : start_idx + r]
+
+            # encrypt iv
+            shift_register = self.f(self.iv, key)
+
+            # select msb from iv (r bytes)
+            msb = shift_register[:r]
+
+            # xor with plaintext
+            cipher_n = block ^ msb
+            ciphertext = np.append(ciphertext, cipher_n)
+
+            self.iv = np.concatenate([self.iv[r:], msb])
+        return bytes(ciphertext)
+    
+    def decrypt_in_ofb(self, ciphertext: bytes) -> bytes:
+        # one round in ofb
+
+        # init plaintext and r
+        plaintext = np.empty(0, dtype=np.uint8)
+        r = 2
+
+        # convert to numpy bytes
+        ciphertext = np.frombuffer(ciphertext, dtype=np.uint8)
+        key = np.frombuffer(self.key, dtype=np.uint8)
+
+        # deciphering
+        for i in range(len(ciphertext)//r):
+            start_idx = i * r
+            block = ciphertext[start_idx : start_idx + r]
+
+            # encrypt iv
+            shift_register = self.f(self.iv, key)
+
+            # select msb from iv (r bytes)
+            msb = shift_register[:r]
+
+            # xor with block
+            plain_n = block ^ msb
+            plaintext = np.append(plaintext, plain_n)
+
+            self.iv = np.concatenate([self.iv[r:], msb])        
+        return bytes(plaintext)
+    
+    def encrypt_in_counter(self, plaintext: bytes) -> bytes:
+        # one round in counter
+
+        # init ciphertext
+        ciphertext = np.empty(0, dtype=np.uint8)
+
+        # padding
+        remainder = len(self.plaintext) % Cipher.BLOCK_SIZE
+        if remainder != 0:
+            # tambahkan padding agar kelipatan BLOCK_SIZE
+            pad_size = Cipher.BLOCK_SIZE - remainder
+            plaintext = plaintext[:] +  bytes(pad_size * [pad_size])
+
+        # convert to numpy bytes
+        plaintext = np.frombuffer(plaintext, dtype=np.uint8)
+        key = np.frombuffer(self.key, dtype=np.uint8)
+
+        # enciphering
+        for i in range(len(plaintext)//Cipher.BLOCK_SIZE):
+            start_idx = i * Cipher.BLOCK_SIZE
+            block = plaintext[start_idx : start_idx + Cipher.BLOCK_SIZE]
+
+            # encrypt counter
+            register = self.f(int.to_bytes(self.counter), key)
+
+            # xor with plaintext
+            ciphertext = np.append(ciphertext, block ^ register)
+
+            self.counter += 1
+        return bytes(ciphertext)
+    
+    def decrypt_in_counter(self, ciphertext: bytes) -> bytes:
+        # one round in counter
+
+        # init plaintext
+        plaintext = np.empty(0, dtype=np.uint8)
+
+        # convert to numpy bytes
+        ciphertext = np.frombuffer(ciphertext, dtype=np.uint8)
+        key = np.frombuffer(self.key, dtype=np.uint8)
+
+        # deciphering
+        for i in range(len(ciphertext)//Cipher.BLOCK_SIZE):
+            start_idx = i * Cipher.BLOCK_SIZE
+            block = ciphertext[start_idx : start_idx + Cipher.BLOCK_SIZE]
+
+            # encrypt counter
+            register = self.f(int.to_bytes(self.counter), key)
+
+            # xor with block
+            plaintext = np.append(plaintext, block ^ register)
+
+            self.counter += 1
+        return bytes(plaintext)
+
 
     def encrypt(self, plaintext: bytes, key: bytes, mode: str) -> bytes:
-
+        # berisi struktur jaringan feistel
         prev_cipher = None
+
         if mode in ["cbc", "cfb", "ofb"]:
             # set up IV
             random.seed(int.from_bytes(key, "big"))

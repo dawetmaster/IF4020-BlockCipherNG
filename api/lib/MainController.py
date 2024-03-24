@@ -42,7 +42,7 @@ def register_controllers(app: Flask):
             # return 400
             return "Key must be 128-bit (16 bytes)",400
         # encrypt
-        cipher = Cipher(key)
+        cipher = Cipher(key, mode)
         start_time = time.time()
         ciphertext = cipher.encrypt(plaintext, key, mode)
         execution_time = time.time() - start_time

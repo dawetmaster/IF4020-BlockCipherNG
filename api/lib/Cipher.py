@@ -33,8 +33,8 @@ class Cipher:
         random.seed(int.from_bytes(self.key, "big"))
         return random.getrandbits(Cipher.BLOCK_SIZE * 8)
 
-    def encrypt_in_ebc(self, plaintext: bytes) -> bytes:
-        # one round in ebc
+    def encrypt_in_ecb(self, plaintext: bytes) -> bytes:
+        # one round in ecb
 
         # init ciphertext
         ciphertext = np.empty(0, dtype=np.uint8)
@@ -66,8 +66,8 @@ class Cipher:
             ciphertext = np.append(ciphertext, block)
         return bytes(ciphertext)
 
-    def decrypt_in_ebc(self, ciphertext: bytes) -> bytes:
-        # one round in ebc
+    def decrypt_in_ecb(self, ciphertext: bytes) -> bytes:
+        # one round in ecb
 
         # ini plaintext
         plaintext = np.empty(0, dtype=np.uint8)
@@ -450,8 +450,8 @@ class Cipher:
         return bytes(plaintext)
 
     def encrypt(self, plaintext: bytes) -> bytes:
-        if self.mode == "ebc":
-            return self.encrypt_in_ebc(plaintext)
+        if self.mode == "ecb":
+            return self.encrypt_in_ecb(plaintext)
         elif self.mode == "cbc":
             return self.encrypt_in_cbc(plaintext)
         elif self.mode == "cfb":
@@ -463,8 +463,8 @@ class Cipher:
         return bytes()
 
     def decrypt(self, ciphertext: bytes) -> bytes:
-        if self.mode == "ebc":
-            return self.decrypt_in_ebc(ciphertext)
+        if self.mode == "ecb":
+            return self.decrypt_in_ecb(ciphertext)
         elif self.mode == "cbc":
             return self.decrypt_in_cbc(ciphertext)
         elif self.mode == "cfb":

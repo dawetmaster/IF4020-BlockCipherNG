@@ -38,18 +38,20 @@ class Cipher:
         if remainder != 0:
             # tambahkan padding agar kelipatan BLOCK_SIZE
             pad_size = Cipher.BLOCK_SIZE - remainder
-            plaintext += bytes(pad_size * [pad_size])
+            plaintext = plaintext[:] +  bytes(pad_size * [pad_size])
 
         # convert to numpy bytes
         plaintext = np.frombuffer(plaintext, dtype=np.uint8)
+        # print(plaintext)
         key = np.frombuffer(key, dtype=np.uint8)
 
         # enciphering
-        for i in range(0, len(plaintext), Cipher.BLOCK_SIZE):
+        for i in range(len(plaintext)//Cipher.BLOCK_SIZE):
             # init block
             start_index = i * Cipher.BLOCK_SIZE
             # slice
             block = plaintext[start_index : start_index + Cipher.BLOCK_SIZE]
+            # print(block)
             # XOR kan dengan ciphertext sebelumnya bila mode CBC
             if mode == "cbc":
                 block = block ^ prev_cipher
@@ -104,7 +106,7 @@ class Cipher:
         ciphertext = np.frombuffer(ciphertext, dtype=np.uint8)
         key = np.frombuffer(key, dtype=np.uint8)
         # deciphering
-        for i in range(0, len(ciphertext), Cipher.BLOCK_SIZE):
+        for i in range(len(ciphertext)//Cipher.BLOCK_SIZE):
             # init block
             start_index = i * Cipher.BLOCK_SIZE
             # slice
@@ -140,6 +142,7 @@ class Cipher:
             # ganti prev_cipher
             prev_cipher = ciphertext[start_index : start_index + Cipher.BLOCK_SIZE]
             # append
+            # print("b",block)
             plaintext = np.append(plaintext, block)
         # remove padding
         # cek apakah ada padding
@@ -151,7 +154,7 @@ class Cipher:
                 break
         if have_padding:
             # remove padding
-            plaintext = plaintext[:-padding_count]
+            plaintext = plaintext[:len(plaintext)-padding_count]
         return bytes(plaintext)
 
     def generate_key(self) -> list[bytes]:
@@ -896,7 +899,8 @@ if __name__ == "__main__":
     # tes enkripsi
     #"qrstuAwxyz012345" -> 'L*\x80\xa5q*,6\xc0T&I\x84.@\xe1'
     #"qrstvAwxyz012345" ->b'L"\x04\x85q*,6\xc0T&\t\x84>H\xe3'
-    plaintext = np.frombuffer(str.encode("qrsruAvxyz012365"),dtype=np.uint8)
+    # plaintext = np.frombuffer(str.encode("halohalobandung ibukota pariaman. Sudah laman214uiweofewoiferhi"),dtype=np.uint8)
+    plaintext = str.encode("hamohalobandung ibukota pariaman. Sudah laman214uiweofewoiferhi")
     print("plain",bytes(plaintext))
     ciphertext = c.encrypt(plaintext,c.key,'ecb')
     print(f"Ciphertext: {ciphertext}")
@@ -913,3 +917,16 @@ if __name__ == "__main__":
     #Ciphertext: b'\xed \xd5 \x91 j \x8e \xc5 ; y z \xf6 k \xff . \xe3 i K'
     #plain b'qrsruAvxyz012365'
     #Ciphertext: b'z \x91 \xdc \x9d \x9b n g \x86 2 \xf4 \x1e 8 \x9b \xbb \xc6 \x1e'
+
+"""
+plain b'halohalobandung ibukota pariaman. Sudah laman214uiweofewoiferhi'
+Ciphertext: b'S"1:\xb8+,\xed\xf7\x8c\xb3\x17`A\xa5\xb1\xf5\xd6\xe9\xce{V\x1c\x1e\xcc\x80\x1b\xf5\x8e\xac\xcb\xa7j\x92~\xd6\x94\xcf\xcd!\x84\xe0hO\xc3\x15\xece\x1f%4\t\xccF\xef\xbe\xb6\xce^\x14 \x96\x929'
+"""
+"""
+plain b'hamohalobandung ibukota pariaman. Sudah laman214uiweofewoiferhi'
+Ciphertext: b':`j\xfcz\x1cc\xb6\xe4\xfc^\xf9\xcb\xf1\xc33\xf5\xd6\xe9\xce{V\x1c\x1e\xcc\x80\x1b\xf5\x8e\xac\xcb\xa7j\x92~\xd6\x94\xcf\xcd!\x84\xe0hO\xc3\x15\xece\x1f%4\t\xccF\xef\xbe\xb6\xce^\x14 \x96\x929'
+"""
+"""
+plain b'halohalobandung ibukota pbriaman. Sudah laman214uiweofewoiferhi'
+Ciphertext: b'S"1:\xb8+,\xed\xf7\x8c\xb3\x17`A\xa5\xb1\xed\x0c@\x1f6\xe5\xf73Q\x93\x82\xe7B\'\x9b\x16j\x92~\xd6\x94\xcf\xcd!\x84\xe0hO\xc3\x15\xece\x1f%4\t\xccF\xef\xbe\xb6\xce^\x14 \x96\x929'
+"""

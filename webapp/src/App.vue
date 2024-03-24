@@ -1,8 +1,8 @@
 <script setup lang="ts">
   import { RouterView } from 'vue-router'
   import Header from './components/Header.vue'
-  // import Footer from './components/Footer.vue'
-  // import EncryptView from './views/EncryptView.vue';
+  
+  console.log(import.meta.env.VITE_BE_BASE_URL)
 </script>
 
 <template>

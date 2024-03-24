@@ -22,7 +22,7 @@ export default {
   },
   methods: {
     handleFormSubmission(formData: FormData) {
-      this.$emit('encryption-submitted', formData);
+      this.$emit('decryption-submitted', formData);
     }
   }
 }

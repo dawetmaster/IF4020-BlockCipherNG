@@ -1,10 +1,14 @@
 from flask import Flask
+from flask_cors import CORS
 from lib.MainController import register_controllers
 from dotenv import load_dotenv
 import os
 
 def create_app():
+  cors_src = os.getenv("CORS_SRC")
+  print(cors_src)
   app = Flask(__name__)
+  CORS(app, resources={r"/*": {"origins": cors_src}})
 
   # register routes
   register_controllers(app)

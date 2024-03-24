@@ -35,7 +35,7 @@ def register_controllers(app: Flask):
                 # plaintext murni
                 plaintext = str.encode(request.form["inputtext"])
         # baca mode
-        mode = request.form["mode"]
+        mode = request.form["mode"].lower()
         # baca key
         key = str.encode(request.form["key"])
         if(len(key)!=KEY_SIZE):
@@ -83,7 +83,7 @@ def register_controllers(app: Flask):
                 # plaintext murni
                 ciphertext = str.encode(request.form["inputtext"])
       # baca mode
-      mode = request.form["mode"]
+      mode = request.form["mode"].lower()
       # baca key
       key = str.encode(request.form["key"])
       if(len(key)!=KEY_SIZE):

@@ -342,22 +342,8 @@ class Cipher:
                 0xC4,0xA7,0x7E,0x3D,0x64,0x5D,0x19,0x73,
             ],
             [
-                0x60,
-                0x81,
-                0x4F,
-                0xDC,
-                0x22,
-                0x2A,
-                0x90,
-                0x88,
-                0x46,
-                0xEE,
-                0xB8,
-                0x14,
-                0xDE,
-                0x5E,
-                0x0B,
-                0xDB,
+                0x60,0x81,0x4F,0xDC,0x22,0x2A,0x90,0x88, 
+                0x46,0xEE,0xB8,0x14,0xDE,0x5E,0x0B,0xDB,
             ],
             [
                 0xE0,
@@ -486,22 +472,8 @@ class Cipher:
                 0x34,0x8E,0x43,0x44,0xC4,0xDE,0xE9,0xCB,
             ],
             [
-                0x54,
-                0x7B,
-                0x94,
-                0x32,
-                0xA6,
-                0xC2,
-                0x23,
-                0x3D,
-                0xEE,
-                0x4C,
-                0x95,
-                0x0B,
-                0x42,
-                0xFA,
-                0xC3,
-                0x4E,
+                0x54,0x7B,0x94,0x32,0xA6,0xC2,0x23,0x3D, 
+                0xEE,0x4C,0x95,0x0B,0x42,0xFA,0xC3,0x4E,
             ],
             [
                 0x08,
@@ -844,20 +816,3 @@ if __name__ == "__main__":
     # tes dekripsi
     reverse_plaintext = c.decrypt(ciphertext,c.key,"cbc")
     print(f"PLaintext CBC: {reverse_plaintext}")
-
-    #plain b"iamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7'"
-    #Ciphertext ECB: b'\x99Z\x8dn\xbc\xc5i\tF\xa2\x12}\x19\xd0QX\xf5\xc8g\xafH\x93\x0b3\xd7cw@+\x8f\xfa\xe4\xea\x9a\x85\xb5\xa6u\xd8\xf8\x95 \xfc\x03N\xba\x18\x18\x0\xb0\x8aI\xaa\x13\xdbr\x8f\xa9\x05u\xc9\xd2\xcf\xba\xf2\xc0\xc7\xc1}\xcd?\x98\xb1\xeb\xf6tWZ\xf8[P\x01\xfa;\xca'
-    #PLaintext EBC: b"iamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7'"        F4020-NGAWIcrypt>
-    #Ciphertext CBC: b"p\xba\x95\xf1f\x16\xd2\x94\xe1\x1b\xc5'\x07\xea\xef\x0e\xe3\x96/\xf9\x8b\xa4Q\xd8l\x9a\x16.\xe3\xbb\xfb\xaf\x9b\xf5\x89{\xe5\x14K\x894N4\x93\nJ\x1b1\\\xb1\x83~\xf3\xd4\x88\xff\xddC2\x16Nf\xff\xdd"
-    #PLaintext CBC: b"iamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7'".
-
-    #plain b"hamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7'"
-    #Ciphertext ECB: b'i\xa9\x08#\x05\x87B\xb5\xfeOd/\xffHvu\xf5\xc8g\xafH\x93\x0b3\xd7cw@\xb0\x8aI\xaa\x13\xdbr\x8f\xa9\x05u\xc9\xd2\xcf\xba\xf2\xc0\xc7\xc1}\xcd?\x98\xb1\xeb\xf6tWZ\xf8[P\x01\xfa;\xca'
-    #PLaintext EBC: b"hamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7'"
-    #Ciphertext CBC: b'P\xb8(@\x04\x11e\x98i\x98@\xda\x03\xd1\x89\xa9\x92\xf9\xd8\xba\x14=\xed\xdf\x07\xeckQN&\x07\xba\xc3\xe6M\xf8\x12\x8e\x9by\xe6`\x0b\xbd\xc3\x87C\x04\xe0N>\xa1Y\x9a\xd5\xde\x1b\x85\\\x80\xae`\xbb?'
-    #PLaintext CBC: b"hamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7'"
-
-    #plain b'hamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7\\'
-    #Ciphertext ECB: b'i\xa9\x08#\x05\x87B\xb5\xfeOd/\xffHvu\xf5\xc8g\xafH\x93\x0b3\xd7cw@\xb0\x8aI\xaa\x13\xdbr\x8f\xa9\x05u\xc9\xd2\xcf\xba\xf2\xc0\xc7\xc1}\xc1\xb1Jy\xf2\x1e\xba\xf1\xe0\x89\xd5\xc8\x81\xe9\xbb$'
-    #PLaintext EBC: b'hamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7\\'
-    #Ciphertext CBC: b'P\xb8(@\x04\x11e\x98i\x98@\xda\x03\xd1\x89\xa9\x92\xf9\xd8\xba\x14=\xed\xdf\x07\xeckQN&\x07\xba\xc3\xe6M\xf8\x12\x8e\x9by\xe6`\x0b\xbd\xc3\x87C\x04\r\xb8\xc6A\\Ie@\xcaK\xae\xfb?\x9eV\xea'

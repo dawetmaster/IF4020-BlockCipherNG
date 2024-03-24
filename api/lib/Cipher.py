@@ -660,11 +660,11 @@ class Cipher:
         # substitusi
         B = self.substitute(A)
         # byte permutation
-        return self.permutate(B)
+        return self.byte_permutation(B)
 
     def inv_f(self, left_block: np.ndarray, internal_key: np.ndarray) -> np.ndarray:
         # inverse byte permutation
-        B = self.inverse_permutate(left_block)
+        B = self.inverse_byte_permutation(left_block)
         # inverse substitusi
         A = self.inverse_substitute(B)
         # XOR dengan key
@@ -1272,12 +1272,12 @@ class Cipher:
             block[i] = INV_S_BOX[row][column]
         return block
 
-    def permutate(self, B: np.ndarray) -> np.ndarray:
+    def byte_permutation(self, B: np.ndarray) -> np.ndarray:
         # digenerate dengan python random dengan seed 960024
         P_BOX = [12, 8, 4, 0, 9, 14, 15, 10, 1, 6, 3, 13, 2, 11, 5, 7]
         return np.array([B[P_BOX[i]] for i in range(Cipher.BLOCK_SIZE)], dtype=np.uint8)
 
-    def inverse_permutate(self, left_block: np.ndarray) -> np.ndarray:
+    def inverse_byte_permutation(self, left_block: np.ndarray) -> np.ndarray:
         INVERSE_P_BOX = [3, 8, 12, 10, 2, 14, 9, 15, 1, 4, 7, 13, 0, 11, 5, 6]
         return np.array(
             [left_block[INVERSE_P_BOX[i]] for i in range(Cipher.BLOCK_SIZE)],

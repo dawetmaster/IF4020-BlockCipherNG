@@ -191,6 +191,8 @@ class Cipher:
 
         # convert to numpy bytes
         plaintext = np.frombuffer(plaintext, dtype=np.uint8)
+        # convert initial self.iv
+        self.iv = np.frombuffer(self.iv,dtype=np.uint8)
 
         # enciphering
         for i in range(len(plaintext)//r):
@@ -198,7 +200,15 @@ class Cipher:
             block = plaintext[start_idx : start_idx + r]
 
             # encrypt iv
-            shift_register = self.f(self.iv, key)
+            # initial permutation
+            shift_register = self.initial_permutation(self.iv)
+            for j in range(Cipher.ROUNDS):
+                # get subkey
+                subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
+                #f function
+                shift_register = self.f(shift_register,subkey )
+            # final permutation
+            shift_register = np.frombuffer(self.final_permutation(shift_register),dtype=np.uint8)
 
             # select msb from iv (r bytes)
             msb = shift_register[:r]
@@ -219,15 +229,23 @@ class Cipher:
 
         # convert to numpy bytes
         ciphertext = np.frombuffer(ciphertext, dtype=np.uint8)
-        key = np.frombuffer(self.key, dtype=np.uint8)
-
+        # convert initial self.iv
+        self.iv = np.frombuffer(self.iv,dtype=np.uint8)
         # deciphering
         for i in range(len(ciphertext)//r):
             start_idx = i * r
             block = ciphertext[start_idx : start_idx + r]
 
             # encrypt iv
-            shift_register = self.f(self.iv, key)
+            # initial permutation
+            shift_register = self.initial_permutation(self.iv)
+            for j in range(Cipher.ROUNDS):
+                # get subkey
+                subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
+                #f function
+                shift_register = self.f(shift_register,subkey )
+            # final permutation
+            shift_register = np.frombuffer(self.final_permutation(shift_register),dtype=np.uint8)
 
             # select msb from iv (r bytes)
             msb = shift_register[:r]
@@ -236,7 +254,18 @@ class Cipher:
             plain_n = block ^ msb
             plaintext = np.append(plaintext, plain_n)
 
-            self.iv = np.concatenate([self.iv[r:], block])        
+            self.iv = np.concatenate([self.iv[r:], block])  
+        # remove padding
+        # cek apakah ada padding
+        padding_count = plaintext[-1]
+        have_padding = True
+        for k in range(len(plaintext) - 1, len(plaintext) - padding_count - 1, -1):
+            if plaintext[k] != padding_count:
+                have_padding = False
+                break
+        if have_padding:
+            # remove padding
+            plaintext = plaintext[:len(plaintext)-padding_count]      
         return bytes(plaintext)
 
     def encrypt_in_ofb(self, plaintext: bytes) -> bytes:
@@ -387,6 +416,8 @@ class Cipher:
             return self.encrypt_in_ebc(plaintext)
         elif(self.mode=="cbc"):
             return self.encrypt_in_cbc(plaintext)
+        elif(self.mode=="cfb"):
+            return self.encrypt_in_cfb(plaintext)
         elif(self.mode=="ctr"):
             return self.encrypt_in_counter(plaintext)
         return bytes()
@@ -449,6 +480,8 @@ class Cipher:
             return self.decrypt_in_ebc(ciphertext)
         elif(self.mode=="cbc"):
             return self.decrypt_in_cbc(ciphertext)
+        elif(self.mode=="cfb"):
+            return self.decrypt_in_cfb(ciphertext)
         elif(self.mode=="ctr"):
             return self.decrypt_in_counter(ciphertext)
         return bytes()
@@ -754,22 +787,8 @@ class Cipher:
                 0x9B,0x1E,0x87,0xE9,0xCE,0x55,0x28,0xDF,
             ],
             [
-                0x8C,
-                0xA1,
-                0x89,
-                0x0D,
-                0xBF,
-                0xE6,
-                0x42,
-                0x68,
-                0x41,
-                0x99,
-                0x2D,
-                0x0F,
-                0xB0,
-                0x54,
-                0xBB,
-                0x16,
+                0x8C,0xA1,0x89,0x0D,0xBF,0xE6,0x42,0x68, 
+                0x41,0x99,0x2D,0x0F,0xB0,0x54,0xBB,0x16,
             ],
         ]
         for i in range(Cipher.KEY_SIZE):
@@ -814,22 +833,8 @@ class Cipher:
                 0xC1,0xAF,0xBD,0x03,0x01,0x13,0x8A,0x6B,
             ],
             [
-                0x3A,
-                0x91,
-                0x11,
-                0x41,
-                0x4F,
-                0x67,
-                0xDC,
-                0xEA,
-                0x97,
-                0xF2,
-                0xCF,
-                0xCE,
-                0xF0,
-                0xB4,
-                0xE6,
-                0x73,
+                0x3A,0x91,0x11,0x41,0x4F,0x67,0xDC,0xEA, 
+                0x97,0xF2,0xCF,0xCE,0xF0,0xB4,0xE6,0x73,
             ],
             [
                 0x96,
@@ -1047,15 +1052,15 @@ class Cipher:
         return unpermutated
 
 if __name__ == "__main__":
-    c = Cipher(str.encode("abcdefghijklmnop"),"ctr")
+    c = Cipher(str.encode("abcdefghijklmnop"),"cfb")
     # res = c.substitute(np.frombuffer(str.encode("qrstuvwxyz012345"),dtype=np.uint8))
 
     # tes enkripsi
     plaintext = str.encode("hamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7\\")
     print("plain",bytes(plaintext))
     ciphertext = c.encrypt(plaintext)
-    print(f"Ciphertext CTR: {ciphertext}")
+    print(f"Ciphertext CFB: {ciphertext}")
     # tes dekripsi
-    c = Cipher(str.encode("abcdefghijklmnop"),"ctr")
+    c = Cipher(str.encode("abcdefghijklmnop"),"cfb")
     reverse_plaintext = c.decrypt(ciphertext)
-    print(f"PLaintext CTR: {reverse_plaintext}")
+    print(f"PLaintext CFB: {reverse_plaintext}")

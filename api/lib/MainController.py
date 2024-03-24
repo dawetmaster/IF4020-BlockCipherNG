@@ -42,9 +42,9 @@ def register_controllers(app: Flask):
             # return 400
             return "Key must be 128-bit (16 bytes)",400
         # encrypt
-        cipher = Cipher(key)
+        cipher = Cipher(key, mode)
         start_time = time.time()
-        ciphertext = cipher.encrypt(plaintext, key, mode)
+        ciphertext = cipher.encrypt(plaintext)
         execution_time = time.time() - start_time
         # save temp file
         filename = ""
@@ -90,9 +90,9 @@ def register_controllers(app: Flask):
         # return 400
         return "Key must be 128-bit (16 bytes)",400
       # decrypt
-      cipher = Cipher()
+      cipher = Cipher(key,mode)
       start_time = time.time()
-      plaintext = cipher.decrypt(ciphertext, key, mode)
+      plaintext = cipher.decrypt(ciphertext)
       execution_time = time.time() - start_time
       # save temp file
       filename = ""

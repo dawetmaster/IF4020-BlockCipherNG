@@ -48,13 +48,22 @@ class Cipher:
 
         # convert to numpy bytes
         plaintext = np.frombuffer(plaintext, dtype=np.uint8)
-        key = np.frombuffer(self.key, dtype=np.uint8)
 
         # enciphering
         for i in range(len(plaintext)//Cipher.BLOCK_SIZE):
             start_idx = i * Cipher.BLOCK_SIZE
             block = plaintext[start_idx : start_idx + Cipher.BLOCK_SIZE]
-            ciphertext = np.append(ciphertext, self.f(block, key))
+            # initial permutation
+            block = self.initial_permutation(block)
+            for j in range(Cipher.ROUNDS):
+                # get subkey
+                subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
+                #f function
+                block = self.f(block,subkey )
+            # final permutation
+            block = np.frombuffer(self.final_permutation(block),dtype=np.uint8)
+            # append
+            ciphertext = np.append(ciphertext, block)
         return bytes(ciphertext)
     
     def decrypt_in_ebc(self, ciphertext: bytes) -> bytes:
@@ -65,13 +74,31 @@ class Cipher:
 
         # convert to numpy bytes
         ciphertext = np.frombuffer(ciphertext, dtype=np.uint8)
-        key = np.frombuffer(self.key, dtype=np.uint8)
 
         # deciphering
         for i in range(len(ciphertext)//Cipher.BLOCK_SIZE):
             start_idx = i * Cipher.BLOCK_SIZE
             block = ciphertext[start_idx : start_idx + Cipher.BLOCK_SIZE]
-            plaintext = np.append(plaintext, self.inv_f(block, key))
+            # inverse final permutation
+            block = self.inverse_final_permutation(block)
+            for j in range(Cipher.ROUNDS-1,-1,-1):
+                subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
+                block = self.inv_f(block, subkey)
+            # initial permutation
+            block = self.inverse_initial_permutation(block)
+            # append
+            plaintext = np.append(plaintext, block)
+        # remove padding
+        # cek apakah ada padding
+        padding_count = plaintext[-1]
+        have_padding = True
+        for k in range(len(plaintext) - 1, len(plaintext) - padding_count - 1, -1):
+            if plaintext[k] != padding_count:
+                have_padding = False
+                break
+        if have_padding:
+            # remove padding
+            plaintext = plaintext[:len(plaintext)-padding_count]
         return bytes(plaintext)
     
     def encrypt_in_cbc(self, plaintext: bytes) -> bytes:
@@ -304,8 +331,11 @@ class Cipher:
         return bytes(plaintext)
 
 
-    def encrypt(self, plaintext: bytes, key: bytes, mode: str) -> bytes:
+    def encrypt(self, plaintext: bytes) -> bytes:
         # berisi struktur jaringan feistel
+        if(self.mode=="ebc"):
+            return self.encrypt_in_ebc(plaintext)
+        return bytes()
         prev_cipher = None
 
         if mode in ["cbc", "cfb", "ofb"]:
@@ -360,7 +390,10 @@ class Cipher:
             ciphertext = np.append(ciphertext, block)
         return bytes(ciphertext)
 
-    def decrypt(self, ciphertext: bytes, key: bytes, mode: str) -> bytes:
+    def decrypt(self, ciphertext: bytes) -> bytes:
+        if(self.mode=="ebc"):
+            return self.decrypt_in_ebc(ciphertext)
+        return bytes()
         # set up IV
         prev_cipher = None
         if mode in ["cbc", "cfb", "ofb"]:
@@ -647,22 +680,8 @@ class Cipher:
                 0xC2,0xD3,0xAC,0x62,0x91,0x95,0xE4,0x79,
             ],
             [
-                0xE7,
-                0xC8,
-                0x37,
-                0x6D,
-                0x8D,
-                0xD5,
-                0x4E,
-                0xA9,
-                0x6C,
-                0x56,
-                0xF4,
-                0xEA,
-                0x65,
-                0x7A,
-                0xAE,
-                0x08,
+                0xE7,0xC8,0x37,0x6D,0x8D,0xD5,0x4E,0xA9, 
+                0x6C,0x56,0xF4,0xEA,0x65,0x7A,0xAE,0x08,
             ],
             [
                 0xBA,
@@ -763,22 +782,8 @@ class Cipher:
                 0x76,0x5B,0xA2,0x49,0x6D,0x8B,0xD1,0x25,
             ],
             [
-                0x72,
-                0xF8,
-                0xF6,
-                0x64,
-                0x86,
-                0x68,
-                0x98,
-                0x16,
-                0xD4,
-                0xA4,
-                0x5C,
-                0xCC,
-                0x5D,
-                0x65,
-                0xB6,
-                0x92,
+                0x72,0xF8,0xF6,0x64,0x86,0x68,0x98,0x16, 
+                0xD4,0xA4,0x5C,0xCC,0x5D,0x65,0xB6,0x92,
             ],
             [
                 0x6C,
@@ -1068,20 +1073,20 @@ class Cipher:
         return unpermutated
 
 if __name__ == "__main__":
-    c = Cipher(str.encode("abcdefghijklmnop"))
+    c = Cipher(str.encode("abcdefghijklmnop"),"ebc")
     # res = c.substitute(np.frombuffer(str.encode("qrstuvwxyz012345"),dtype=np.uint8))
 
     # tes enkripsi
     plaintext = str.encode("hamojalobandung ibvkota par0aman. Sudah laman214uiweofewoifer7\\")
     print("plain",bytes(plaintext))
-    ciphertext = c.encrypt(plaintext,c.key,'ecb')
+    ciphertext = c.encrypt(plaintext)
     print(f"Ciphertext ECB: {ciphertext}")
     # tes dekripsi
-    reverse_plaintext = c.decrypt(ciphertext,c.key,"ebc")
+    reverse_plaintext = c.decrypt(ciphertext)
     print(f"PLaintext EBC: {reverse_plaintext}")
-    # cbc
-    ciphertext = c.encrypt(plaintext,c.key,'cbc')
-    print(f"Ciphertext CBC: {ciphertext}")
-    # tes dekripsi
-    reverse_plaintext = c.decrypt(ciphertext,c.key,"cbc")
-    print(f"PLaintext CBC: {reverse_plaintext}")
+    # # cbc
+    # ciphertext = c.encrypt(plaintext,'cbc')
+    # print(f"Ciphertext CBC: {ciphertext}")
+    # # tes dekripsi
+    # reverse_plaintext = c.decrypt(ciphertext,"cbc")
+    # print(f"PLaintext CBC: {reverse_plaintext}")

@@ -107,7 +107,7 @@ def register_controllers(app: Flask):
           f.write(plaintext)
       # bikin json
       return jsonify(
-          {"plaintext": base64.b64encode(plaintext), "elapsed_time": execution_time,'download_filename':filename}
+          {"plaintext": base64.b64encode(plaintext).decode(), "elapsed_time": execution_time,'download_filename':filename}
       )
 
     @app.route("/download/<filename>", methods=["GET"])

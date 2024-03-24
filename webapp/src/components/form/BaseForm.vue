@@ -24,7 +24,16 @@ defineProps<{
         <slot></slot>
       </div>
     </div>
-    <input type="text" id="key" name="key" v-model="key" :placeholder="keyplaceholder" class="rounded-md shadow-sm focus:border-rose-300 dark:focus:border-rose-500 focus:ring focus:ring-rose-200 dark:focus:ring-rose-400 dark:bg-stone-700 dark:text-white dark:border-stone-400 dark:placeholder:text-stone-400">
+    <div class="flex gap-4">
+      <input type="text" id="key" name="key" v-model="key" :placeholder="keyplaceholder" class="grow rounded-md shadow-sm focus:border-rose-300 dark:focus:border-rose-500 focus:ring focus:ring-rose-200 dark:focus:ring-rose-400 dark:bg-stone-700 dark:text-white dark:border-stone-400 dark:placeholder:text-stone-400">
+      <select required v-model="mode" class="rounded-md shadow-sm focus:border-rose-300 dark:focus:border-rose-500 focus:ring focus:ring-rose-200 dark:focus:ring-rose-400 dark:bg-stone-700 dark:text-white dark:border-stone-400 dark:placeholder:text-stone-400">
+        <option :value="'ECB'">ECB</option>
+        <option :value="'CBC'">CBC</option>
+        <option :value="'OFB'">OFB</option>
+        <option :value="'CFB'">CFB</option>
+        <option :value="'Counter'">Counter</option>
+      </select>
+    </div>
     <input type="submit" class="text-white bg-rose-600 dark:bg-rose-800 rounded drop-shadow-sm hover:drop-shadow-md p-2">
   </form>
 </template>
@@ -36,12 +45,13 @@ export default {
       inputtext: '',
       base64check: '',
       key: '',
+      mode: 'ECB',
       file: null,
     }
   },
   methods: {
     submitForm() {
-      this.$emit('form-submitted', { inputtext: this.inputtext, key: this.key, file: this.file, base64check: this.base64check });
+      this.$emit('form-submitted', { inputtext: this.inputtext, key: this.key, mode: this.mode, file: this.file, base64check: this.base64check });
     },
     handleFileChange(event: any) {
       this.file = event.target.files[0];

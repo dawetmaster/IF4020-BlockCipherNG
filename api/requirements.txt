@@ -1,5 +1,6 @@
 numpy
 flask
+flask-cors
 uuid
 python-dotenv
 base64; python_version < '3.10'

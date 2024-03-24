@@ -63,20 +63,19 @@ class Cipher:
                 # processed_left = left_block ^ processed_right
                 subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
                 processed_block = self.f(block,subkey )
-                processed_left = (
-                    np.concatenate((right_block, left_block)) ^ processed_block
-                )
+                block = self.f(block,subkey )
+                # processed_left = (
+                #     np.concatenate((right_block, left_block)) ^ processed_block
+                # )
                 # left_block = processed_block[: (Cipher.BLOCK_SIZE // 2)]
                 # right_block = processed_block[(Cipher.BLOCK_SIZE // 2) :]
-                left_block = right_block
-                right_block = processed_left[(Cipher.BLOCK_SIZE // 2) :]
+                # left_block = right_block
+                # right_block = processed_left[(Cipher.BLOCK_SIZE // 2) :]
             # final permutation
             print("enc left",left_block)
             print("enc right",right_block)
-            block = np.concatenate([left_block, right_block])
-            print("enc pre final permutation",block)
+            # block = np.concatenate([left_block, right_block])
             block = self.final_permutation(block)
-            print("enc post final permutation",bytes(block))
             # ganti prev_cipher
             prev_cipher = block
             # append
@@ -108,26 +107,28 @@ class Cipher:
             # slice
             block = ciphertext[start_index : start_index + Cipher.BLOCK_SIZE]
             # inverse final permutation
-            print("dec post final permutation",bytes(block))
             block = self.inverse_final_permutation(block)
-            print("dec pre final permutation",block)
             # partisi
             left_block = block[: (Cipher.BLOCK_SIZE // 2)]
             right_block = block[(Cipher.BLOCK_SIZE // 2) :]
-            for j in range(Cipher.ROUNDS):
-                # processed_left = self.inv_f(left_block, self.subkeys[j])
-                # processed_right = right_block ^ processed_left
+            print("dec left",left_block)
+            print("dec right",right_block)
+            processed_right = right_block
+            for j in range(Cipher.ROUNDS-1,-1,-1):
                 subkey = np.frombuffer(self.subkeys[j],dtype=np.uint8)
-                processed_block = self.inv_f(block, subkey)
-                processed_right = (
-                    np.concatenate((right_block, left_block)) ^ processed_block
-                )
                 # swap
                 # left_block = processed_block[: (Cipher.BLOCK_SIZE // 2)]
                 # right_block = processed_block[(Cipher.BLOCK_SIZE // 2) :]
-                left_block = processed_right[: (Cipher.BLOCK_SIZE // 2)]
-                right_block = left_block
-            block = np.concatenate([left_block, right_block])
+                # left_block = processed_right
+                # right_block = left_block
+                # processed_left = self.inv_f(left_block, self.subkeys[j])
+                # processed_right = right_block ^ processed_left
+                processed_block = self.inv_f(block, subkey)
+                block = processed_block
+                # processed_right = (
+                #     np.concatenate((right_block, left_block)) ^ processed_block
+                # )
+            # block = np.concatenate([left_block, right_block])
             # initial permutation
             block = self.inverse_initial_permutation(block)
             # XOR kan dengan ciphertext sebelumnya bila mode CBC
@@ -941,7 +942,7 @@ if __name__ == "__main__":
     #"qrstuAwxyz012345" -> 'L*\x80\xa5q*,6\xc0T&I\x84.@\xe1'
     #"qrstvAwxyz012345" ->b'L"\x04\x85q*,6\xc0T&\t\x84>H\xe3'
     plaintext = np.frombuffer(str.encode("qrstuAwxyz012355"),dtype=np.uint8)
-    print("plain",plaintext)
+    print("plain",bytes(plaintext))
     ciphertext = c.encrypt(plaintext,c.key,'ecb')
     print(f"Ciphertext: {ciphertext}")
     # tes dekripsi
@@ -951,3 +952,16 @@ if __name__ == "__main__":
     # print(plaintext)
     # print(c.final_permutation(plaintext))
     # print(c.inverse_final_permutation(c.final_permutation(plaintext)))
+    # print(plaintext)
+    # print(c.inv_f(c.f(plaintext,np.frombuffer(c.subkeys[0],dtype=np.uint8)),np.frombuffer(c.subkeys[0],dtype=np.uint8)))
+    # print(plaintext)
+    # print(c.inverse_permutate(c.permutate(plaintext)))
+    # print(plaintext)
+    # print(c.inverse_substitute(c.substitute(plaintext)))
+    # print(plaintext)
+    # print(c.inverse_initial_permutation(c.initial_permutation(plaintext)))
+    # print(plaintext)
+    # print(c.inv_f(c.f(plaintext,np.frombuffer(c.subkeys[0],dtype=np.uint8)),np.frombuffer(c.subkeys[0],dtype=np.uint8)))
+
+    print("PLAINTEKS:",bytes(plaintext))
+    print("REVERSED_PLAINTEKS",c.decrypt(c.encrypt(plaintext,c.key,'ecb'),c.key,'ecb'))

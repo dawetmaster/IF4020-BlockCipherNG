@@ -59,7 +59,7 @@ def register_controllers(app: Flask):
             f.write(ciphertext)
         # bikin json
         return jsonify(
-            {"ciphertext": base64.b64encode(ciphertext), "elapsed_time": execution_time,'download_filename':filename}
+            {"ciphertext": base64.b64encode(ciphertext).decode(), "elapsed_time": execution_time,'download_filename':filename}
         )
 
     @app.route("/decrypt", methods=["POST"])

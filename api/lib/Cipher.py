@@ -40,7 +40,7 @@ class Cipher:
         ciphertext = np.empty(0, dtype=np.uint8)
 
         # padding
-        remainder = len(self.plaintext) % Cipher.BLOCK_SIZE
+        remainder = len(plaintext) % Cipher.BLOCK_SIZE
         if remainder != 0:
             # tambahkan padding agar kelipatan BLOCK_SIZE
             pad_size = Cipher.BLOCK_SIZE - remainder
@@ -81,7 +81,7 @@ class Cipher:
         ciphertext = np.empty(0, dtype=np.uint8)
 
         # padding
-        remainder = len(self.plaintext) % Cipher.BLOCK_SIZE
+        remainder = len(plaintext) % Cipher.BLOCK_SIZE
         if remainder != 0:
             # tambahkan padding agar kelipatan BLOCK_SIZE
             pad_size = Cipher.BLOCK_SIZE - remainder
@@ -126,7 +126,7 @@ class Cipher:
         r = 2 # bytes
 
         # padding
-        remainder = len(self.plaintext) % Cipher.BLOCK_SIZE
+        remainder = len(plaintext) % Cipher.BLOCK_SIZE
         if remainder != 0:
             # tambahkan padding agar kelipatan BLOCK_SIZE
             pad_size = Cipher.BLOCK_SIZE - remainder
@@ -191,7 +191,7 @@ class Cipher:
         r = 2 # bytes
 
         # padding
-        remainder = len(self.plaintext) % Cipher.BLOCK_SIZE
+        remainder = len(plaintext) % Cipher.BLOCK_SIZE
         if remainder != 0:
             # tambahkan padding agar kelipatan BLOCK_SIZE
             pad_size = Cipher.BLOCK_SIZE - remainder
@@ -255,7 +255,7 @@ class Cipher:
         ciphertext = np.empty(0, dtype=np.uint8)
 
         # padding
-        remainder = len(self.plaintext) % Cipher.BLOCK_SIZE
+        remainder = len(plaintext) % Cipher.BLOCK_SIZE
         if remainder != 0:
             # tambahkan padding agar kelipatan BLOCK_SIZE
             pad_size = Cipher.BLOCK_SIZE - remainder

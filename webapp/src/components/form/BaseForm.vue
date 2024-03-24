@@ -43,7 +43,7 @@ export default {
   data() {
     return {
       inputtext: '',
-      base64check: '',
+      base64check: false,
       key: '',
       mode: 'ECB',
       file: null,
